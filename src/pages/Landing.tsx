@@ -40,7 +40,7 @@ export const Landing = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-[600px] mx-auto">
           {[
-            { n: '45', l: 'Questions' },
+            { n: '50', l: 'Questions' },
             { n: '4', l: 'Joueurs' },
             { n: '7', l: 'Modules' },
             { n: '100%', l: 'Anonyme' }
