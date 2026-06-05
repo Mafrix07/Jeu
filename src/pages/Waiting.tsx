@@ -70,7 +70,7 @@ export const Waiting = () => {
           animate={{ y: 0, opacity: 1 }}
           className="mt-12 text-[var(--accent)] font-black text-xl font-mono uppercase tracking-[2px]"
         >
-          >>> ACCÈS AUX RÉSULTATS AUTORISÉ
+          {'>>>'} ACCÈS AUX RÉSULTATS AUTORISÉ
         </motion.div>
       )}
     </div>

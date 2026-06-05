@@ -106,7 +106,7 @@ export const ResultsAll = () => {
             onClick={() => navigate('/')}
             className="text-[var(--accent)] font-mono text-sm font-black uppercase tracking-widest hover:text-white transition-colors"
           >
-            >>> RETOUR_ACCUEIL
+            {'>>>'} RETOUR_ACCUEIL
           </button>
         </div>
       </div>
