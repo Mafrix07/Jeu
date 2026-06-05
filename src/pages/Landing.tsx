@@ -19,7 +19,7 @@ export const Landing = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="text-6xl md:text-8xl font-black mb-6 leading-[0.9] uppercase italic"
+          className="text-[clamp(2.4rem,14vw,5rem)] font-black mb-6 leading-[0.9] uppercase italic"
           style={{
             background: 'linear-gradient(135deg, #fff 30%, var(--accent))',
             WebkitBackgroundClip: 'text',
