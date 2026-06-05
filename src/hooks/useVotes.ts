@@ -6,28 +6,24 @@ import { questions } from '../lib/questions';
 export const useVotes = (sessionId: string | null, playerName: string | null) => {
   const [loading, setLoading] = useState(false);
 
-  const submitVote = async (questionId: number, votedFor: string) => {
+  const submitVote = async (questionId: number, votedFor: string, comment?: string) => {
     if (!sessionId || !playerName) return;
 
     setLoading(true);
     try {
       const voterHash = generateVoterHash(sessionId, playerName);
       const question = questions.find(q => q.id === questionId);
-
       if (!question) throw new Error("Question not found");
 
-      // Save vote
-      const { error: voteError } = await supabase.from('votes').insert({
+      await supabase.from('votes').insert({
         session_id: sessionId,
         voter_hash: voterHash,
         question_id: questionId,
         voted_for: votedFor,
-        category: question.category
+        category: question.category,
+        comment: comment?.trim() || null,
       });
 
-      if (voteError) throw voteError;
-
-      // Update progress
       const { data: progress } = await supabase
         .from('progress')
         .select('questions_answered')
@@ -40,10 +36,7 @@ export const useVotes = (sessionId: string | null, playerName: string | null) =>
 
       await supabase
         .from('progress')
-        .update({
-          questions_answered: newCount,
-          is_done: isDone
-        })
+        .update({ questions_answered: newCount, is_done: isDone })
         .eq('session_id', sessionId)
         .eq('player_name', playerName);
 
