@@ -10,25 +10,31 @@ interface VoteButtonProps {
   name: string;
   onClick: () => void;
   disabled?: boolean;
-  className?: string;
+  letter: string;
 }
 
-export const VoteButton = ({ name, onClick, disabled, className }: VoteButtonProps) => {
+export const VoteButton = ({ name, onClick, disabled, letter }: VoteButtonProps) => {
   return (
     <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={!disabled ? { scale: 1.02, borderColor: 'var(--accent)', backgroundColor: 'rgba(0,229,255,0.06)' } : {}}
+      whileTap={!disabled ? { scale: 0.98 } : {}}
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-full py-4 px-6 rounded-2xl text-xl font-bold transition-colors",
-        "bg-[#5c6bc0] text-white shadow-lg",
-        "hover:bg-[#7986cb] active:bg-[#4caf50]",
-        "disabled:opacity-50 disabled:cursor-not-allowed",
-        className
+        "group flex items-center gap-4 w-full p-4 rounded-xl border-2 transition-all text-left",
+        "bg-[var(--surface)] border-[var(--border)] text-[var(--text)]",
+        "disabled:opacity-40 disabled:cursor-not-allowed",
+        !disabled && "hover:text-white"
       )}
     >
-      {name}
+      <div className={cn(
+        "flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-mono font-bold text-sm transition-all",
+        "bg-[var(--border)] text-[var(--muted)]",
+        !disabled && "group-hover:bg-[var(--accent)] group-hover:text-black"
+      )}>
+        {letter}
+      </div>
+      <span className="text-lg font-bold">{name}</span>
     </motion.button>
   );
 };

@@ -12,7 +12,6 @@ export const Login = () => {
 
   useEffect(() => {
     const fetchTakenNames = async () => {
-      // Find active session
       const { data: session } = await supabase
         .from('sessions')
         .select('id')
@@ -31,7 +30,6 @@ export const Login = () => {
           setTakenNames(progress.map(p => p.player_name));
         }
 
-        // Subscribe to changes
         const channel = supabase
           .channel('public:progress')
           .on('postgres_changes', { 
@@ -63,10 +61,17 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-[400px]">
-        <h2 className="text-3xl font-black text-white mb-8 text-center uppercase italic tracking-tight">
-          C'est qui ?
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.7 }}
+          className="font-mono text-[10px] text-[var(--accent)] tracking-[4px] uppercase mb-4 text-center"
+        >
+          // IDENTIFICATION_REQUIRED
+        </motion.p>
+        <h2 className="text-3xl font-black text-white mb-10 text-center uppercase italic tracking-tight">
+          SÉLECTION DU PROFIL
         </h2>
 
         <div className="grid grid-cols-1 gap-4">
@@ -78,28 +83,29 @@ export const Login = () => {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: i * 0.1 }}
-                whileHover={!isTaken && !loading ? { x: 10, backgroundColor: '#5c6bc0' } : {}}
+                whileHover={!isTaken && !loading ? { x: 8, borderColor: 'var(--accent)' } : {}}
                 onClick={() => !isTaken && handlePick(name)}
                 disabled={loading || isTaken}
-                className={`p-6 rounded-2xl text-2xl font-bold text-left border-l-8 flex justify-between items-center group transition-all ${
+                className={`group p-6 rounded-2xl text-2xl font-black text-left border-2 flex justify-between items-center transition-all ${
                   isTaken 
-                    ? 'bg-[#1a1a2e]/40 text-white/20 border-gray-700 cursor-not-allowed' 
-                    : 'bg-[#1a1a2e] text-white border-[#ffd700]'
+                    ? 'bg-[var(--card)]/40 border-[var(--border)] text-[var(--muted)] cursor-not-allowed opacity-50' 
+                    : 'bg-[var(--card)] border-[var(--border)] text-white hover:text-[var(--accent)]'
                 }`}
               >
-                <span>
-                  {name}
-                  {isTaken && <span className="ml-4 text-xs font-normal opacity-50">(Déjà connecté)</span>}
-                </span>
-                {!isTaken && <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>}
+                <div className="flex flex-col">
+                  <span className="leading-none">{name}</span>
+                  {isTaken && <span className="text-[10px] font-mono mt-1 text-[var(--red)] uppercase tracking-wider">OFFLINE</span>}
+                  {!isTaken && <span className="text-[10px] font-mono mt-1 text-[var(--green)] uppercase tracking-wider">READY</span>}
+                </div>
+                {!isTaken && <span className="text-2xl opacity-0 group-hover:opacity-100 transition-opacity">→</span>}
               </motion.button>
             );
           })}
         </div>
         
         {loading && (
-          <p className="mt-8 text-[#5c6bc0] text-center font-bold animate-pulse">
-            Connexion en cours...
+          <p className="mt-8 text-[var(--accent)] text-center font-mono text-sm font-bold animate-pulse uppercase tracking-[2px]">
+            SYNCHRONISATION...
           </p>
         )}
       </div>

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM — Programmation C Système</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161d;
+    --card: #1a1e28;
+    --border: #252a38;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --green: #22d3a0;
+    --red: #ff4d6d;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index:0;
+  }
+
+  .wrap { position:relative; z-index:1; width:100%; max-width:780px; }
+
+  /* ── SCREEN TRANSITIONS ── */
+  .screen { display:none; animation: fadeIn .35s ease; }
+  .screen.active { display:block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+
+  /* ══════════════════════ WELCOME ══════════════════════ */
+  #screen-welcome { text-align:center; padding: 60px 20px; }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: .7;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: .95rem;
+    font-family: var(--mono);
+    margin-bottom: 48px;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+
+  .stat-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 22px;
+    text-align:center;
+  }
+  .stat-chip .num { font-size: 1.7rem; font-weight:800; color: var(--accent); font-family:var(--mono); }
+  .stat-chip .lbl { font-size:.75rem; color:var(--muted); margin-top:2px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 36px;
+    border-radius: 12px;
+    border: none;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing:.5px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0080a0);
+    color: #000;
+  }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow: 0 8px 24px rgba(0,229,255,.3); }
+  .btn-secondary {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color:var(--accent); }
+
+  /* ══════════════════════ QUIZ ══════════════════════ */
+  #screen-quiz { padding-top: 10px; }
+
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .q-counter {
+    font-family: var(--mono);
+    font-size: .85rem;
+    color: var(--muted);
+  }
+  .q-counter span { color: var(--accent); font-weight:700; }
+
+  .score-live {
+    font-family: var(--mono);
+    font-size: .85rem;
+    color: var(--muted);
+  }
+  .score-live .s { color: var(--green); font-weight:700; }
+
+  .timer-badge {
+    font-family: var(--mono);
+    font-size:.85rem;
+    padding: 6px 14px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color: var(--accent);
+  }
+
+  /* Progress bar */
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height:100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius:2px;
+    transition: width .4s ease;
+  }
+
+  /* Question card */
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 30px;
+    margin-bottom: 20px;
+  }
+
+  .q-num {
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    opacity:.7;
+  }
+
+  .q-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: #fff;
+  }
+
+  /* Options */
+  .options { display:flex; flex-direction:column; gap:10px; }
+
+  .opt-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .15s;
+    text-align: left;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: .95rem;
+    line-height:1.4;
+  }
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(0,229,255,.06);
+    color: #fff;
+  }
+
+  .opt-letter {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--border);
+    display: flex; align-items:center; justify-content:center;
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-weight:700;
+    color: var(--muted);
+    transition: all .15s;
+  }
+
+  .opt-btn:hover:not(:disabled) .opt-letter {
+    background: rgba(0,229,255,.15);
+    color: var(--accent);
+  }
+
+  .opt-btn.correct {
+    border-color: var(--green) !important;
+    background: rgba(34,211,160,.08) !important;
+  }
+  .opt-btn.correct .opt-letter {
+    background: var(--green) !important;
+    color:#000 !important;
+  }
+  .opt-btn.wrong {
+    border-color: var(--red) !important;
+    background: rgba(255,77,109,.08) !important;
+  }
+  .opt-btn.wrong .opt-letter {
+    background: var(--red) !important;
+    color:#fff !important;
+  }
+  .opt-btn:disabled { cursor:default; }
+
+  /* Feedback box */
+  .feedback-box {
+    display:none;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-top: 14px;
+    font-size:.9rem;
+    line-height:1.5;
+    border-left: 3px solid var(--green);
+    color: var(--text);
+  }
+  .feedback-box.wrong-fb { border-left-color: var(--red); }
+  .feedback-box .fb-icon { margin-right:8px; }
+  .feedback-box.show { display:block; animation:fadeIn .25s ease; }
+
+  /* Next button */
+  .next-row {
+    display:flex;
+    justify-content:flex-end;
+    margin-top:20px;
+    gap: 12px;
+  }
+
+  /* ══════════════════════ RESULTS ══════════════════════ */
+  #screen-results { padding: 40px 20px; text-align:center; }
+
+  .result-ring {
+    position: relative;
+    display: inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin: 0 auto 32px;
+  }
+
+  .ring-svg { transform:rotate(-90deg); }
+
+  .ring-center {
+    position:absolute;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .ring-pct { font-size:2.2rem; font-weight:800; font-family:var(--mono); color:#fff; line-height:1; }
+  .ring-lbl { font-size:.75rem; color:var(--muted); margin-top:4px; }
+
+  .result-mention {
+    font-size: 1.5rem;
+    font-weight:800;
+    margin-bottom:8px;
+  }
+  .result-sub {
+    color:var(--muted);
+    font-size:.9rem;
+    font-family:var(--mono);
+    margin-bottom:40px;
+  }
+
+  .results-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+    gap:14px;
+    margin-bottom:36px;
+  }
+  .res-cell {
+    background: var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 10px;
+  }
+  .res-cell .big { font-size:1.6rem; font-weight:800; font-family:var(--mono); }
+  .res-cell .sm { font-size:.75rem; color:var(--muted); margin-top:4px; }
+  .col-green .big { color: var(--green); }
+  .col-red .big { color: var(--red); }
+  .col-accent .big { color: var(--accent); }
+
+  /* Errors accordion */
+  .errors-section { text-align:left; margin-bottom:32px; }
+  .errors-title {
+    font-size:.85rem;
+    color:var(--muted);
+    font-family:var(--mono);
+    margin-bottom:12px;
+    text-transform:uppercase;
+    letter-spacing:2px;
+  }
+  .err-item {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 16px;
+    margin-bottom:8px;
+    font-size:.85rem;
+    line-height:1.5;
+  }
+  .err-item .eq { color:var(--text); margin-bottom:4px; }
+  .err-item .ea { color:var(--red); font-family:var(--mono); font-size:.8rem; }
+  .err-item .ec { color:var(--green); font-family:var(--mono); font-size:.8rem; }
+
+  .result-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+
+  @media(max-width:520px){
+    .q-card { padding:20px 16px; }
+    h1 { font-size:1.8rem; }
+    .stats-row { gap:12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ═══ WELCOME ═══ -->
+<div id="screen-welcome" class="screen active">
+  <p class="logo">// Programmation Système</p>
+  <h1>QCM<br>Langage C</h1>
+  <p class="subtitle">209 questions · Session de 150 aléatoires</p>
+  <div class="stats-row">
+    <div class="stat-chip"><div class="num">209</div><div class="lbl">Questions</div></div>
+    <div class="stat-chip"><div class="num">150</div><div class="lbl">Par session</div></div>
+    <div class="stat-chip"><div class="num">6</div><div class="lbl">Modules</div></div>
+    <div class="stat-chip"><div class="num">4</div><div class="lbl">Choix / Q</div></div>
+  </div>
+  <button class="btn btn-primary" onclick="startQuiz()">▶ Démarrer le QCM</button>
+</div>
+
+<!-- ═══ QUIZ ═══ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-header">
+    <div class="q-counter">Question <span id="q-idx">1</span> / <span id="q-total">150</span></div>
+    <div class="timer-badge" id="timer">00:00</div>
+    <div class="score-live">Score&nbsp;<span class="s" id="live-score">0</span></div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+  <div class="q-card">
+    <div class="q-num" id="q-num-label">Q001</div>
+    <div class="q-text" id="q-text">Chargement…</div>
+  </div>
+
+  <div class="options" id="options-container"></div>
+
+  <div class="feedback-box" id="feedback-box"></div>
+
+  <div class="next-row">
+    <button class="btn btn-secondary" id="btn-quit" onclick="confirmQuit()">Quitter</button>
+    <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()" style="display:none">
+      Suivant →
+    </button>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div id="screen-results" class="screen">
+  <p class="logo">// Résultats finaux</p>
+
+  <div class="result-ring">
+    <svg class="ring-svg" width="160" height="160" viewBox="0 0 160 160">
+      <circle cx="80" cy="80" r="68" fill="none" stroke="#1a1e28" stroke-width="12"/>
+      <circle id="ring-arc" cx="80" cy="80" r="68" fill="none" stroke="url(#rg)" stroke-width="12"
+        stroke-linecap="round" stroke-dasharray="427" stroke-dashoffset="427"/>
+      <defs>
+        <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#00e5ff"/>
+          <stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="ring-center">
+      <div class="ring-pct" id="res-pct">0%</div>
+      <div class="ring-lbl">Score</div>
+    </div>
+  </div>
+
+  <div class="result-mention" id="res-mention">—</div>
+  <div class="result-sub" id="res-sub">—</div>
+
+  <div class="results-grid">
+    <div class="res-cell col-green"><div class="big" id="res-correct">0</div><div class="sm">✅ Correctes</div></div>
+    <div class="res-cell col-red"><div class="big" id="res-wrong">0</div><div class="sm">❌ Incorrectes</div></div>
+    <div class="res-cell col-accent"><div class="big" id="res-time">0:00</div><div class="sm">⏱ Durée</div></div>
+  </div>
+
+  <div class="errors-section" id="errors-section"></div>
+
+  <div class="result-btns">
+    <button class="btn btn-primary" onclick="startQuiz()">🔄 Nouvelle session</button>
+    <button class="btn btn-secondary" onclick="showScreen('screen-welcome')">🏠 Accueil</button>
+  </div>
+</div>
+
+</div><!-- .wrap -->
+
+<script>
+const ALL_QUESTIONS = 
+[{"q": "Quel système d'exploitation a rendu le C célèbre ?", "options": ["A) Windows", "B) DOS", "C) Unix", "D) macOS"], "answer": "C", "explication": "Unix a été réécrit en C, ce qui a popularisé le langage dans le monde entier."}, {"q": "Dans quel laboratoire le C a-t-il été créé ?", "options": ["A) Les laboratoires Microsoft", "B) Les Bell Labs d'AT&T", "C) Le MIT", "D) Stanford"], "answer": "B", "explication": "Dennis Ritchie travaillait aux Bell Labs (laboratoires d'AT&T) quand il a créé le C."}, {"q": "Quelle norme du C a été publiée en 1989 et est souvent appelée 'ANSI C' ?", "options": ["A) C77", "B) C89", "C) C99", "D) C11"], "answer": "B", "explication": "La norme C89 (ou ANSI C) est la première norme officielle du langage C, publiée en 1989."}, {"q": "Quelle norme du C a introduit les commentaires // et les tableaux à taille variable ?", "options": ["A) C89", "B) C95", "C) C99", "D) C11"], "answer": "C", "explication": "Le C99 (1999) a ajouté les commentaires // et les tableaux à taille variable entre autres améliorations."}, {"q": "Lequel de ces langages a été fortement influencé par le C ?", "options": ["A) COBOL", "B) FORTRAN", "C) Java", "D) SQL"], "answer": "C", "explication": "Java, C++, C#, Python et de nombreux langages modernes sont fortement influencés par la syntaxe du C."}, {"q": "Quelle est la principale qualité du langage C qui le rend encore utilisé aujourd'hui ?", "options": ["A) Il est facile à apprendre", "B) Il est très proche du matériel et très performant", "C) Il est orienté objet", "D) Il a une bibliothèque graphique intégrée"], "answer": "B", "explication": "Le C permet d'écrire du code proche du matériel, ce qui le rend très performant pour les systèmes embarqués et les OS."}, {"q": "Quel livre célèbre a été écrit par les créateurs du C et est encore une référence aujourd'hui ?", "options": ["A) 'The Art of Computer Programming'", "B) 'The C Programming Language' (Kernighan & Ritchie)", "C) 'Clean Code'", "D) 'Structure and Interpretation of Computer Programs'"], "answer": "B", "explication": "'The C Programming Language' de Brian Kernighan et Dennis Ritchie (le fameux 'K&R') est la bible du C."}, {"q": "Quel IDE est recommandé pour programmer en C sous Windows avec le compilateur MinGW ?", "options": ["A) Xcode", "B) Code::Blocks", "C) Eclipse", "D) NetBeans"], "answer": "B", "explication": "Code::Blocks avec mingw-setup.exe est la solution recommandée sous Windows pour les débutants."}, {"q": "Quel IDE Apple est disponible sur l'App Store pour programmer en C sur Mac ?", "options": ["A) Visual Studio", "B) Code::Blocks", "C) Xcode", "D) Dev-C++"], "answer": "C", "explication": "Xcode est l'environnement de développement d'Apple, disponible gratuitement sur le Mac App Store."}, {"q": "Sous Linux, quel compilateur C est généralement déjà installé ou facilement disponible ?", "options": ["A) Xcode", "B) MinGW", "C) GCC", "D) Clang seulement"], "answer": "C", "explication": "GCC (GNU Compiler Collection) est le compilateur standard sous Linux, souvent déjà installé."}, {"q": "Quel éditeur de code très populaire (gratuit, de Microsoft) fonctionne sur Windows, Mac et Linux ?", "options": ["A) Notepad++", "B) Visual Studio Code", "C) Sublime Text", "D) Atom"], "answer": "B", "explication": "Visual Studio Code (VS Code) est un éditeur léger et gratuit qui fonctionne sur tous les systèmes."}, {"q": "Quelle est la différence entre un IDE et un simple éditeur de texte pour programmer en C ?", "options": ["A) Aucune différence", "B) Un IDE intègre compilation, débogage et aide au code en un seul outil", "C) Un éditeur de texte est plus rapide", "D) Un IDE ne peut que compiler"], "answer": "B", "explication": "Un IDE (Environnement de Développement Intégré) combine éditeur, compilateur, débogueur et autres outils."}, {"q": "Quelle version gratuite de Visual Studio (Microsoft) peut-on utiliser pour programmer en C ?", "options": ["A) Visual Studio Professional", "B) Visual Studio Ultimate", "C) Visual Studio Community", "D) Visual Studio Lite"], "answer": "C", "explication": "Visual Studio Community est la version gratuite de Microsoft, idéale pour les étudiants et débutants."}, {"q": "Sous Windows, quel outil (compilateur) faut-il installer pour que Code::Blocks puisse compiler du C ?", "options": ["A) GCC directement", "B) MinGW (Minimalist GNU for Windows)", "C) Clang", "D) MSVC"], "answer": "B", "explication": "MinGW est un portage de GCC pour Windows. Code::Blocks avec le setup 'mingw' l'inclut automatiquement."}, {"q": "Quelle commande Linux permet de vérifier si GCC est bien installé ?", "options": ["A) gcc --help", "B) gcc --version", "C) which gcc", "D) B et C sont tous les deux corrects"], "answer": "D", "explication": "'gcc --version' affiche la version installée et 'which gcc' indique son emplacement. Les deux fonctionnent."}, {"q": "Que signifie IDE ?", "options": ["A) Interface De l'Entreprise", "B) Integrated Development Environment (Environnement de Développement Intégré)", "C) Internal Debug Editor", "D) Internet Development Engine"], "answer": "B", "explication": "IDE = Integrated Development Environment, un outil tout-en-un pour coder, compiler et déboguer."}, {"q": "Quel opérateur permet d'accéder à la valeur pointée par un pointeur ?", "options": ["A) &", "B) ->", "C) *", "D) ."], "answer": "C", "explication": "* (déréférencement) accède à la valeur à l'adresse stockée dans le pointeur."}, {"q": "Que vaut *p si p contient l'adresse d'une variable age qui vaut 25 ?", "options": ["A) L'adresse de age", "B) 25", "C) NULL", "D) La taille de int"], "answer": "B", "explication": "*p déréférence le pointeur : cela donne la valeur stockée à l'adresse pointée, donc 25."}, {"q": "Après int x = 10; int *p = &x; *p = 20; que vaut x ?", "options": ["A) 10", "B) L'adresse de x", "C) 20", "D) NULL"], "answer": "C", "explication": "*p = 20 modifie la valeur à l'adresse pointée par p, c'est-à-dire x. Donc x vaut maintenant 20."}, {"q": "Que se passe-t-il si on utilise un pointeur qui n'a pas été initialisé ?", "options": ["A) Il pointe automatiquement sur NULL", "B) Comportement imprévisible, plantage possible", "C) La valeur vaut 0", "D) Le compilateur refuse de compiler"], "answer": "B", "explication": "Un pointeur non initialisé contient une adresse aléatoire. Le déréférencer peut provoquer un crash (segfault)."}, {"q": "Pourquoi passe-t-on un pointeur à une fonction au lieu de la valeur directe ?", "options": ["A) Pour que la fonction puisse modifier la variable originale", "B) Pour économiser de la mémoire", "C) Parce que c'est obligatoire", "D) Pour accélérer le programme"], "answer": "A", "explication": "En passant l'adresse (pointeur), la fonction peut modifier la variable originale, pas seulement sa copie."}, {"q": "Quelle est la relation entre le nom d'un tableau et les pointeurs ?", "options": ["A) Aucune relation", "B) Le nom du tableau est l'adresse de son premier élément, comme un pointeur", "C) Seulement pour les tableaux de char", "D) Seulement pour les tableaux globaux"], "answer": "B", "explication": "En C, le nom d'un tableau (ex: tab) représente l'adresse de tab[0], exactement comme un pointeur."}, {"q": "Que signifie 'Segmentation fault' (ou Segfault) ?", "options": ["A) Erreur de syntaxe dans le code", "B) Division par zéro", "C) Accès à une zone mémoire non autorisée", "D) Fichier non trouvé"], "answer": "C", "explication": "Un segfault survient quand le programme tente d'accéder à de la mémoire qui ne lui appartient pas."}, {"q": "Que retourne strchr() comme valeur quand elle trouve le caractère cherché ?", "options": ["A) L'indice du caractère", "B) Un pointeur vers ce caractère dans la chaîne", "C) La valeur ASCII du caractère", "D) 1 (vrai)"], "answer": "B", "explication": "strchr() retourne un pointeur vers le premier caractère trouvé dans la chaîne."}, {"q": "Quelle est la bonne façon d'initialiser un pointeur qui ne pointe sur rien pour l'instant ?", "options": ["A) int *p = 0;", "B) int *p = NULL;", "C) int *p;", "D) A et B sont tous deux corrects"], "answer": "D", "explication": "NULL vaut 0 en C. Écrire int *p = NULL; ou int *p = 0; sont équivalents et tous deux valides."}, {"q": "Peut-on modifier une variable d'une autre fonction grâce aux pointeurs ?", "options": ["A) Non, c'est impossible", "B) Oui, en passant son adresse à la fonction", "C) Seulement avec des variables globales", "D) Seulement avec des tableaux"], "answer": "B", "explication": "C'est l'un des principaux intérêts des pointeurs : passer &maVariable à une fonction pour qu'elle la modifie."}, {"q": "Quelle bibliothèque contient les fonctions printf et scanf ?", "options": ["A) stdlib.h", "B) string.h", "C) stdio.h", "D) math.h"], "answer": "C", "explication": "stdio.h (Standard Input Output) fournit printf(), scanf(), fopen(), fclose(), etc."}, {"q": "Comment déclarer une variable entière nommée 'age' en C ?", "options": ["A) age : int;", "B) int age;", "C) var age = int;", "D) integer age;"], "answer": "B", "explication": "En C, on écrit d'abord le type (int) puis le nom de la variable (age)."}, {"q": "Pourquoi met-on '&' devant une variable dans scanf ?", "options": ["A) Pour multiplier la variable", "B) Pour passer son adresse mémoire", "C) Pour la comparer", "D) C'est une erreur de syntaxe"], "answer": "B", "explication": "& donne l'adresse de la variable pour que scanf() sache où écrire la valeur saisie."}, {"q": "Que retourne main() pour indiquer que le programme s'est bien terminé ?", "options": ["A) 1", "B) -1", "C) NULL", "D) 0"], "answer": "D", "explication": "return 0; dans main() signale au système que tout s'est bien passé (code de succès)."}, {"q": "Comment déclarer une constante avec #define ?", "options": ["A) define MAX 100", "B) const MAX = 100", "C) #define MAX 100", "D) constant MAX 100"], "answer": "C", "explication": "#define MAX 100 crée une constante symbolique. Partout où MAX apparaît dans le code, il sera remplacé par 100."}, {"q": "Quel format printf affiche un entier ?", "options": ["A) %s", "B) %f", "C) %c", "D) %d"], "answer": "D", "explication": "%d affiche un entier décimal. Exemple : printf(\"%d\", 42); affiche 42."}, {"q": "Quel format printf affiche un nombre décimal ?", "options": ["A) %d", "B) %f", "C) %s", "D) %c"], "answer": "B", "explication": "%f affiche un nombre à virgule flottante. Exemple : printf(\"%f\", 3.14);"}, {"q": "Quel type de variable stocke un nombre entier en C ?", "options": ["A) float", "B) char", "C) int", "D) double"], "answer": "C", "explication": "int est le type entier de base en C. Il stocke des nombres comme -5, 0, 42."}, {"q": "Quel type stocke un nombre décimal en C ?", "options": ["A) int", "B) double", "C) char", "D) long"], "answer": "B", "explication": "double (et float) stockent des nombres à virgule flottante comme 3.14 ou -0.5."}, {"q": "Quel type stocke un seul caractère en C ?", "options": ["A) string", "B) letter", "C) char", "D) byte"], "answer": "C", "explication": "char stocke un seul caractère (une lettre, un chiffre, un symbole) sur 1 octet."}, {"q": "En quelle année le langage C a-t-il été créé ?", "options": ["A) 1965", "B) 1972", "C) 1980", "D) 1969"], "answer": "B", "explication": "Dennis Ritchie a développé le C en 1972 aux Bell Labs."}, {"q": "Qui est le créateur du langage C ?", "options": ["A) Bjarne Stroustrup", "B) Linus Torvalds", "C) Dennis Ritchie", "D) Ken Thompson"], "answer": "C", "explication": "Dennis Ritchie est le créateur du langage C."}, {"q": "De quel langage le C est-il une évolution directe ?", "options": ["A) FORTRAN", "B) COBOL", "C) B", "D) Pascal"], "answer": "C", "explication": "Le C est une évolution du langage B."}, {"q": "Quel système d'exploitation a popularisé le langage C ?", "options": ["A) Windows", "B) DOS", "C) Unix", "D) macOS"], "answer": "C", "explication": "Unix a été développé en C, ce qui a contribué à sa popularité."}, {"q": "Lequel de ces langages n'est PAS influencé par le C ?", "options": ["A) Java", "B) C++", "C) Python", "D) COBOL"], "answer": "D", "explication": "COBOL est antérieur au C et n'en est pas dérivé."}, {"q": "Qu'est-ce que la programmation système ?", "options": ["A) Développement d'applications graphiques", "B) Développement de logiciels proches du matériel ou du système d'exploitation", "C) Développement de sites web", "D) Développement de bases de données"], "answer": "B", "explication": "La programmation système interagit directement avec le matériel ou l'OS."}, {"q": "Lequel est un exemple de logiciel système ?", "options": ["A) Navigateur web", "B) Traitement de texte", "C) Compilateur GCC", "D) Tableur"], "answer": "C", "explication": "GCC est un compilateur, donc un logiciel système."}, {"q": "Quelle est la principale différence entre prog. applicative et prog. système ?", "options": ["A) La programmation applicative utilise des appels système directement", "B) La programmation système s'occupe de la gestion fine des ressources", "C) La programmation système développe des apps pour l'utilisateur final", "D) Il n'y a aucune différence"], "answer": "B", "explication": "La prog. système gère finement la mémoire et les ressources matérielles."}, {"q": "Quel IDE est recommandé pour programmer en C sous Windows avec MinGW ?", "options": ["A) Xcode", "B) Code::Blocks", "C) Eclipse", "D) IntelliJ IDEA"], "answer": "B", "explication": "Code::Blocks avec mingw-setup est recommandé sous Windows."}, {"q": "Quel IDE Microsoft est disponible gratuitement pour programmer en C ?", "options": ["A) Visual Studio Professional", "B) Visual Studio Ultimate", "C) Visual Studio Community", "D) Visual Code Studio"], "answer": "C", "explication": "Visual Studio Community est la version gratuite de Microsoft."}, {"q": "Quelle directive inclut la bibliothèque d'entrées/sorties standard en C ?", "options": ["A) #include <string.h>", "B) #include <stdio.h>", "C) #include <stdlib.h>", "D) #include <math.h>"], "answer": "B", "explication": "stdio.h fournit printf, scanf, etc."}, {"q": "Quelle est la fonction principale obligatoire d'un programme C ?", "options": ["A) start()", "B) begin()", "C) main()", "D) run()"], "answer": "C", "explication": "Tout programme C commence son exécution dans la fonction main()."}, {"q": "Que retourne main() en cas de succès par convention ?", "options": ["A) 1", "B) -1", "C) NULL", "D) 0"], "answer": "D", "explication": "return 0 indique que le programme s'est terminé avec succès."}, {"q": "Que signifie #include en C ?", "options": ["A) Définir une constante", "B) Inclure un fichier pour la compilation", "C) Déclarer une variable globale", "D) Commenter du code"], "answer": "B", "explication": "#include demande d'ajouter un fichier (en-tête) pour la compilation."}, {"q": "Quelle est la bonne syntaxe pour afficher 'Bonjour' en C ?", "options": ["A) print('Bonjour');", "B) echo 'Bonjour';", "C) printf(\"Bonjour\");", "D) cout << \"Bonjour\";"], "answer": "C", "explication": "printf() est la fonction d'affichage standard en C."}, {"q": "Comment débuter un commentaire sur une seule ligne en C (C99+) ?", "options": ["A) /* commentaire */", "B) # commentaire", "C) // commentaire", "D) -- commentaire"], "answer": "C", "explication": "// introduit un commentaire sur une ligne (style C99/C++)."}, {"q": "Quelle en-tête est nécessaire pour utiliser malloc() ?", "options": ["A) <stdio.h>", "B) <string.h>", "C) <stdlib.h>", "D) <memory.h>"], "answer": "C", "explication": "malloc(), free(), calloc() sont déclarés dans stdlib.h."}, {"q": "Qu'est-ce qu'une directive de préprocesseur en C ?", "options": ["A) Une instruction exécutée à l'exécution", "B) Une instruction traitée avant la compilation", "C) Une déclaration de fonction", "D) Un type de boucle"], "answer": "B", "explication": "Les directives (#include, #define) sont traitées par le préprocesseur avant la compilation."}, {"q": "Quel caractère termine chaque instruction en C ?", "options": ["A) :", "B) .", "C) ;", "D) ,"], "answer": "C", "explication": "Le point-virgule ; termine chaque instruction en C."}, {"q": "Quelle est la signature complète correcte de main() recevant des arguments ?", "options": ["A) int main(int argc, char *argv[])", "B) void main(string args[])", "C) main(int args, char argv)", "D) int main(char[] argv, int argc)"], "answer": "A", "explication": "argc est le nombre d'arguments, argv[] est le tableau de chaînes."}, {"q": "Quel type représente un entier en C ?", "options": ["A) float", "B) char", "C) int", "D) double"], "answer": "C", "explication": "int est le type entier de base en C."}, {"q": "Combien d'octets occupe généralement un int sur une architecture 32 bits ?", "options": ["A) 1", "B) 2", "C) 4", "D) 8"], "answer": "C", "explication": "Un int occupe généralement 4 octets (32 bits) sur les architectures modernes."}, {"q": "Quel type stocke un caractère en C ?", "options": ["A) string", "B) char", "C) byte", "D) letter"], "answer": "B", "explication": "char stocke un caractère (1 octet)."}, {"q": "Quelle est la différence entre float et double ?", "options": ["A) float est entier, double est décimal", "B) float a moins de précision que double", "C) double ne peut pas être négatif", "D) Aucune différence"], "answer": "B", "explication": "float (4 octets) a moins de précision que double (8 octets)."}, {"q": "Comment déclarer une constante en C ?", "options": ["A) constant int X = 5;", "B) final int X = 5;", "C) #define X 5 ou const int X = 5;", "D) static int X = 5;"], "answer": "C", "explication": "#define ou const permettent de définir des constantes."}, {"q": "Quel opérateur est le modulo en C ?", "options": ["A) //", "B) mod", "C) %", "D) &"], "answer": "C", "explication": "% donne le reste de la division entière."}, {"q": "Que vaut x après : int x = 5; x += 3; ?", "options": ["A) 5", "B) 3", "C) 8", "D) 15"], "answer": "C", "explication": "x += 3 est équivalent à x = x + 3, donc 5+3=8."}, {"q": "Quel opérateur teste l'égalité en C ?", "options": ["A) =", "B) :=", "C) ==", "D) eq"], "answer": "C", "explication": "== teste l'égalité ; = est l'affectation."}, {"q": "Que vaut l'expression : 7 / 2 en C (entiers) ?", "options": ["A) 3.5", "B) 4", "C) 3", "D) 2"], "answer": "C", "explication": "La division entière tronque le résultat : 7/2 = 3."}, {"q": "Qu'est-ce que le transtypage (cast) en C ?", "options": ["A) Changer le nom d'une variable", "B) Convertir une valeur d'un type à un autre", "C) Déclarer plusieurs variables", "D) Allouer de la mémoire"], "answer": "B", "explication": "Le cast (int)x convertit explicitement x en entier."}, {"q": "Que retourne sizeof(int) sur la plupart des systèmes 32/64 bits ?", "options": ["A) 1", "B) 2", "C) 4", "D) 8"], "answer": "C", "explication": "sizeof(int) retourne généralement 4 (octets)."}, {"q": "Quel est le résultat de !0 en C ?", "options": ["A) 0", "B) -1", "C) 1", "D) NULL"], "answer": "C", "explication": "!0 = 1 (NOT logique de faux donne vrai)."}, {"q": "Quelle structure teste une condition en C ?", "options": ["A) when", "B) if", "C) test", "D) check"], "answer": "B", "explication": "if() est la structure conditionnelle de base."}, {"q": "Quelle boucle s'exécute au moins une fois même si la condition est fausse ?", "options": ["A) for", "B) while", "C) do...while", "D) loop"], "answer": "C", "explication": "do...while teste la condition APRÈS la première exécution."}, {"q": "Quelle instruction sort immédiatement d'une boucle en C ?", "options": ["A) exit", "B) stop", "C) continue", "D) break"], "answer": "D", "explication": "break interrompt immédiatement la boucle courante."}, {"q": "Que fait continue dans une boucle ?", "options": ["A) Sort de la boucle", "B) Passe à l'itération suivante", "C) Réinitialise le compteur", "D) Met la boucle en pause"], "answer": "B", "explication": "continue saute le reste du corps et passe à l'itération suivante."}, {"q": "Quelle structure permet de tester plusieurs valeurs d'une variable entière ?", "options": ["A) multiif", "B) select", "C) switch", "D) choose"], "answer": "C", "explication": "switch...case permet de tester plusieurs valeurs."}, {"q": "Que se passe-t-il si on oublie break dans un case de switch ?", "options": ["A) Erreur de compilation", "B) Le programme crash", "C) L'exécution continue dans le case suivant (fall-through)", "D) Le case est ignoré"], "answer": "C", "explication": "Sans break, le fall-through provoque l'exécution du case suivant."}, {"q": "Quelle est la syntaxe correcte d'une boucle for comptant de 0 à 9 ?", "options": ["A) for(i=0; i<10; i++)", "B) for(i=0 to 9)", "C) for i in range(10):", "D) loop(i=0; i<10)"], "answer": "A", "explication": "for(init; condition; incrément) est la syntaxe correcte."}, {"q": "Quel mot-clé introduit un bloc alternatif au if ?", "options": ["A) otherwise", "B) else", "C) or", "D) default"], "answer": "B", "explication": "else introduit le bloc exécuté si la condition du if est fausse."}, {"q": "Quelle est la condition d'une boucle while infinie ?", "options": ["A) while(false)", "B) while(0)", "C) while(1)", "D) while()"], "answer": "C", "explication": "while(1) ou while(true) crée une boucle infinie."}, {"q": "Peut-on imbriquer des if en C ?", "options": ["A) Non, c'est interdit", "B) Oui, sans limitation théorique", "C) Oui, mais max 3 niveaux", "D) Seulement avec des accolades spéciales"], "answer": "B", "explication": "Les structures de contrôle peuvent être imbriquées librement."}, {"q": "Comment déclarer une fonction qui ne retourne rien en C ?", "options": ["A) null maFonction()", "B) void maFonction()", "C) none maFonction()", "D) empty maFonction()"], "answer": "B", "explication": "void indique qu'une fonction ne retourne pas de valeur."}, {"q": "Qu'est-ce qu'un prototype de fonction en C ?", "options": ["A) La définition complète de la fonction", "B) La déclaration de la signature avant le corps", "C) Un modèle de fonction générique", "D) Une fonction récursive"], "answer": "B", "explication": "Le prototype déclare la signature (type, nom, paramètres) avant la définition."}, {"q": "En C, les arguments sont passés par défaut :", "options": ["A) Par référence", "B) Par adresse", "C) Par valeur", "D) Par pointeur"], "answer": "C", "explication": "En C, les arguments sont passés par valeur (copie)."}, {"q": "Quelle instruction retourne une valeur depuis une fonction ?", "options": ["A) give", "B) yield", "C) return", "D) send"], "answer": "C", "explication": "return renvoie une valeur et termine la fonction."}, {"q": "Qu'est-ce que la récursivité ?", "options": ["A) Une fonction qui appelle une autre fonction", "B) Une fonction qui s'appelle elle-même", "C) Une boucle for imbriquée", "D) Un type de pointeur"], "answer": "B", "explication": "Une fonction récursive s'appelle elle-même directement ou indirectement."}, {"q": "Quelle variable est visible dans tout le programme ?", "options": ["A) Locale", "B) Statique locale", "C) Globale", "D) Auto"], "answer": "C", "explication": "Les variables globales sont déclarées en dehors de toute fonction."}, {"q": "Que fait le mot-clé static sur une variable locale ?", "options": ["A) La rend globale", "B) Lui conserve sa valeur entre les appels de la fonction", "C) La rend constante", "D) L'alloue sur le tas"], "answer": "B", "explication": "static local conserve la valeur entre les appels successifs."}, {"q": "Une fonction sans prototype appelée avant sa définition provoque :", "options": ["A) Une erreur à l'exécution", "B) Un avertissement ou erreur selon la norme C", "C) Rien, c'est toujours permis", "D) Une segmentation fault"], "answer": "B", "explication": "En C99+, appeler une fonction non déclarée est une erreur."}, {"q": "Qu'est-ce qu'un pointeur en C ?", "options": ["A) Un type de tableau", "B) Une variable qui stocke une adresse mémoire", "C) Un alias pour une variable", "D) Une fonction spéciale"], "answer": "B", "explication": "Un pointeur contient l'adresse mémoire d'une autre variable."}, {"q": "Quel opérateur permet d'obtenir l'adresse d'une variable ?", "options": ["A) *", "B) &", "C) ->", "D) #"], "answer": "B", "explication": "& (adresse-de) retourne l'adresse mémoire d'une variable."}, {"q": "Quel opérateur déréférence un pointeur (accède à la valeur pointée) ?", "options": ["A) &", "B) ->", "C) *", "D) ."], "answer": "C", "explication": "* (déréférencement) accède à la valeur à l'adresse stockée dans le pointeur."}, {"q": "Comment déclarer un pointeur vers un entier ?", "options": ["A) int& p;", "B) pointer int p;", "C) int *p;", "D) &int p;"], "answer": "C", "explication": "int *p; déclare p comme pointeur vers un entier."}, {"q": "Qu'est-ce qu'un pointeur NULL ?", "options": ["A) Un pointeur vers 0", "B) Un pointeur non initialisé", "C) Un pointeur qui ne pointe sur aucune adresse valide", "D) Un pointeur vers une chaîne vide"], "answer": "C", "explication": "NULL (valeur 0) indique qu'un pointeur ne pointe nulle part de valide."}, {"q": "Que signifie 'segmentation fault' ?", "options": ["A) Erreur de syntaxe", "B) Accès à une zone mémoire non autorisée", "C) Division par zéro", "D) Débordement de pile"], "answer": "B", "explication": "Une segfault survient quand on accède à de la mémoire non allouée ou protégée."}, {"q": "Quelle fonction alloue dynamiquement de la mémoire ?", "options": ["A) alloc()", "B) new()", "C) malloc()", "D) getmem()"], "answer": "C", "explication": "malloc() alloue un bloc de mémoire sur le tas."}, {"q": "Quelle fonction libère la mémoire allouée dynamiquement ?", "options": ["A) delete()", "B) release()", "C) dealloc()", "D) free()"], "answer": "D", "explication": "free() libère la mémoire précédemment allouée par malloc/calloc."}, {"q": "Que retourne malloc() en cas d'échec d'allocation ?", "options": ["A) -1", "B) 0", "C) NULL", "D) Une adresse aléatoire"], "answer": "C", "explication": "malloc() retourne NULL si l'allocation échoue."}, {"q": "Quelle est la différence entre malloc() et calloc() ?", "options": ["A) calloc alloue sur la pile, malloc sur le tas", "B) calloc initialise la mémoire à zéro, malloc non", "C) malloc prend deux paramètres, calloc un seul", "D) Aucune différence"], "answer": "B", "explication": "calloc(n, size) alloue et initialise à 0 ; malloc(size) n'initialise pas."}, {"q": "Qu'est-ce qu'une fuite mémoire (memory leak) ?", "options": ["A) Accès à un pointeur NULL", "B) Mémoire allouée mais jamais libérée", "C) Débordement de tableau", "D) Variable non initialisée"], "answer": "B", "explication": "Une fuite mémoire = mémoire allouée par malloc non libérée par free."}, {"q": "Comment accède-t-on au membre 'age' d'une structure via un pointeur p ?", "options": ["A) p.age", "B) p::age", "C) p->age", "D) (*p).age ou p->age"], "answer": "D", "explication": "p->age et (*p).age sont équivalents ; -> est la forme abrégée."}, {"q": "Comment déclarer un tableau de 10 entiers en C ?", "options": ["A) int[10] tab;", "B) int tab(10);", "C) int tab[10];", "D) array int tab[10];"], "answer": "C", "explication": "int tab[10]; déclare un tableau de 10 entiers."}, {"q": "Quel est l'indice du premier élément d'un tableau en C ?", "options": ["A) 1", "B) 0", "C) -1", "D) Dépend de la déclaration"], "answer": "B", "explication": "En C, les indices commencent à 0."}, {"q": "Comment les chaînes de caractères sont-elles terminées en C ?", "options": ["A) Par un espace", "B) Par '\\n'", "C) Par '\\0' (caractère nul)", "D) Par EOF"], "answer": "C", "explication": "Les chaînes C se terminent par le caractère nul '\\0'."}, {"q": "Quelle fonction copie une chaîne en C ?", "options": ["A) strdup()", "B) strcpy()", "C) memcpy()", "D) copystr()"], "answer": "B", "explication": "strcpy(dest, src) copie la chaîne src dans dest."}, {"q": "Quelle fonction retourne la longueur d'une chaîne (sans le \\0) ?", "options": ["A) length()", "B) sizeof()", "C) strlen()", "D) strsize()"], "answer": "C", "explication": "strlen() compte les caractères jusqu'au \\0 (non inclus)."}, {"q": "Quelle en-tête est nécessaire pour utiliser strlen, strcpy ?", "options": ["A) <stdio.h>", "B) <stdlib.h>", "C) <string.h>", "D) <char.h>"], "answer": "C", "explication": "Les fonctions de manipulation de chaînes sont dans string.h."}, {"q": "Que se passe-t-il en cas de dépassement de tableau (buffer overflow) ?", "options": ["A) Le programme s'arrête proprement", "B) Comportement indéfini, possiblement écrasement mémoire", "C) Une exception est levée", "D) La valeur est ignorée"], "answer": "B", "explication": "Le dépassement de tableau est un comportement indéfini, très dangereux."}, {"q": "Quelle fonction compare deux chaînes en C ?", "options": ["A) strcmp()", "B) strcomp()", "C) compare()", "D) strdiff()"], "answer": "A", "explication": "strcmp() retourne 0 si les chaînes sont égales."}, {"q": "Comment passer un tableau à une fonction en C ?", "options": ["A) La fonction reçoit une copie du tableau", "B) On passe un pointeur vers le premier élément", "C) C'est impossible directement", "D) On utilise le mot-clé ref"], "answer": "B", "explication": "Le nom d'un tableau est un pointeur vers son premier élément."}, {"q": "Quelle est la taille d'un tableau char tab[20] en octets ?", "options": ["A) 10", "B) 40", "C) 20", "D) Dépend du système"], "answer": "C", "explication": "char = 1 octet, donc 20 éléments = 20 octets."}, {"q": "Quel mot-clé définit une structure en C ?", "options": ["A) class", "B) record", "C) struct", "D) type"], "answer": "C", "explication": "struct permet de regrouper des données de types différents."}, {"q": "Comment accéder au membre 'nom' d'une variable structure 's' (non-pointeur) ?", "options": ["A) s->nom", "B) s.nom", "C) s::nom", "D) s[nom]"], "answer": "B", "explication": "L'opérateur point . accède aux membres d'une structure (non-pointeur)."}, {"q": "Quelle est la différence entre struct et union ?", "options": ["A) Aucune différence", "B) Une union alloue de la mémoire pour tous ses membres simultanément", "C) Une union n'alloue de la mémoire que pour le membre le plus grand (partage)", "D) struct est réservé aux pointeurs"], "answer": "C", "explication": "Dans une union, tous les membres partagent le même espace mémoire."}, {"q": "À quoi sert typedef avec les structures ?", "options": ["A) À accélérer l'accès aux membres", "B) À créer un alias de type pour éviter de répéter 'struct'", "C) À rendre la structure constante", "D) À allouer la structure dynamiquement"], "answer": "B", "explication": "typedef struct Personne { ... } Personne; permet d'écrire Personne p; au lieu de struct Personne p;"}, {"q": "Peut-on imbriquer des structures en C ?", "options": ["A) Non", "B) Oui, une structure peut contenir une autre structure", "C) Oui, mais seulement des pointeurs vers des structures", "D) Oui, mais max 2 niveaux"], "answer": "B", "explication": "Une structure peut avoir des membres de type structure."}, {"q": "Quelle fonction ouvre un fichier en C ?", "options": ["A) open()", "B) fopen()", "C) fileopen()", "D) openfile()"], "answer": "B", "explication": "fopen(nom, mode) ouvre un fichier et retourne un pointeur FILE*."}, {"q": "Quel mode d'ouverture fopen() permet la lecture uniquement ?", "options": ["A) \"w\"", "B) \"a\"", "C) \"r\"", "D) \"x\""], "answer": "C", "explication": "\"r\" ouvre un fichier en lecture seule."}, {"q": "Quelle fonction ferme un fichier en C ?", "options": ["A) fclose()", "B) close()", "C) fileclose()", "D) endfile()"], "answer": "A", "explication": "fclose(fp) ferme le fichier et libère les ressources associées."}, {"q": "Quelle fonction lit une ligne depuis un fichier ?", "options": ["A) fread()", "B) fgets()", "C) readline()", "D) fscan()"], "answer": "B", "explication": "fgets(buf, size, fp) lit au plus size-1 caractères depuis fp."}, {"q": "Que retourne fopen() en cas d'échec ?", "options": ["A) -1", "B) 0", "C) NULL", "D) EOF"], "answer": "C", "explication": "fopen() retourne NULL si le fichier ne peut pas être ouvert."}, {"q": "Quelle fonction écrit une chaîne dans un fichier ?", "options": ["A) fwrite()", "B) fputs()", "C) fprintf()", "D) fputs() ou fprintf()"], "answer": "D", "explication": "fputs() et fprintf() permettent d'écrire dans un fichier."}, {"q": "Quelle fonction détecte la fin d'un fichier ?", "options": ["A) eof()", "B) feof()", "C) endfile()", "D) isend()"], "answer": "B", "explication": "feof(fp) retourne vrai si la fin du fichier est atteinte."}, {"q": "Quelle fonction lit une valeur entière depuis le clavier ?", "options": ["A) get()", "B) input()", "C) scanf()", "D) read()"], "answer": "C", "explication": "scanf(\"%d\", &var) lit un entier depuis stdin."}, {"q": "Quel est le format specifier pour afficher un entier avec printf() ?", "options": ["A) %s", "B) %f", "C) %d", "D) %c"], "answer": "C", "explication": "%d affiche un entier décimal signé."}, {"q": "Quel est le format specifier pour afficher un flottant ?", "options": ["A) %d", "B) %f", "C) %s", "D) %i"], "answer": "B", "explication": "%f affiche un nombre à virgule flottante."}, {"q": "Quel est le format specifier pour afficher une chaîne ?", "options": ["A) %c", "B) %d", "C) %s", "D) %p"], "answer": "C", "explication": "%s affiche une chaîne de caractères."}, {"q": "Que représente '\\n' dans une chaîne C ?", "options": ["A) Un espace", "B) Un retour à la ligne", "C) Un tabulation", "D) Un caractère nul"], "answer": "B", "explication": "'\\n' est le caractère de nouvelle ligne (newline)."}, {"q": "Que représente '\\t' dans une chaîne C ?", "options": ["A) Retour à la ligne", "B) Tabulation", "C) Retour chariot", "D) Caractère nul"], "answer": "B", "explication": "'\\t' est le caractère tabulation horizontale."}, {"q": "Quelle commande compile un fichier C avec GCC ?", "options": ["A) cc prog.c", "B) gcc prog.c -o prog", "C) compile prog.c", "D) build prog.c"], "answer": "B", "explication": "gcc prog.c -o prog compile et nomme l'exécutable 'prog'."}, {"q": "Quelle option GCC active tous les avertissements ?", "options": ["A) -error", "B) -Wall", "C) -warn", "D) -strict"], "answer": "B", "explication": "-Wall active la plupart des avertissements de GCC."}, {"q": "Quelle option GCC active les informations de débogage ?", "options": ["A) -O2", "B) -debug", "C) -g", "D) -d"], "answer": "C", "explication": "-g inclut les symboles de débogage (utilisés par gdb)."}, {"q": "Quel est le rôle du préprocesseur C ?", "options": ["A) Exécuter le programme", "B) Traiter les directives # avant la compilation", "C) Lier les bibliothèques", "D) Optimiser le code"], "answer": "B", "explication": "Le préprocesseur traite #include, #define, #ifdef avant la compilation réelle."}, {"q": "Comment définir une macro en C ?", "options": ["A) macro MAX 100", "B) #define MAX 100", "C) const MAX = 100", "D) define MAX = 100"], "answer": "B", "explication": "#define MAX 100 crée une macro de substitution textuelle."}, {"q": "Quelle directive compile conditionnellement du code ?", "options": ["A) #if / #endif", "B) #switch", "C) #when", "D) #check"], "answer": "A", "explication": "#if, #ifdef, #ifndef, #endif permettent la compilation conditionnelle."}, {"q": "Quelle est l'extension standard d'un fichier source C ?", "options": ["A) .cpp", "B) .cs", "C) .c", "D) .cx"], "answer": "C", "explication": "Les fichiers source C ont l'extension .c"}, {"q": "Quelle est l'extension d'un fichier d'en-tête C ?", "options": ["A) .head", "B) .hdr", "C) .inc", "D) .h"], "answer": "D", "explication": "Les fichiers d'en-tête C ont l'extension .h"}, {"q": "Où sont stockées les variables locales en C ?", "options": ["A) Sur le tas (heap)", "B) Dans le segment BSS", "C) Sur la pile (stack)", "D) Dans les registres CPU"], "answer": "C", "explication": "Les variables locales sont allouées sur la pile (stack)."}, {"q": "Où est allouée la mémoire par malloc() ?", "options": ["A) Sur la pile", "B) Dans les registres", "C) Sur le tas (heap)", "D) Dans le BSS"], "answer": "C", "explication": "malloc() alloue sur le tas (heap), qui persiste hors de la portée de la fonction."}, {"q": "Quelle fonction réalloue un bloc mémoire existant ?", "options": ["A) remalloc()", "B) resize()", "C) realloc()", "D) extend()"], "answer": "C", "explication": "realloc(ptr, new_size) redimensionne un bloc alloué."}, {"q": "Qu'est-ce qu'un double free ?", "options": ["A) Libérer deux fois le même pointeur", "B) Allouer deux fois la même mémoire", "C) Utiliser deux pointeurs vers la même adresse", "D) Un type de fuite mémoire"], "answer": "A", "explication": "Un double free = appeler free() deux fois sur le même pointeur → comportement indéfini."}, {"q": "Quel segment contient les variables globales non initialisées ?", "options": ["A) Stack", "B) Heap", "C) BSS", "D) Text"], "answer": "C", "explication": "Le segment BSS contient les variables globales/statiques non initialisées."}, {"q": "Quelle fonction crée un nouveau processus en C sous Unix ?", "options": ["A) spawn()", "B) fork()", "C) create()", "D) exec()"], "answer": "B", "explication": "fork() crée une copie du processus courant (processus fils)."}, {"q": "Que retourne fork() dans le processus fils ?", "options": ["A) -1", "B) Le PID du père", "C) 0", "D) 1"], "answer": "C", "explication": "fork() retourne 0 dans le fils, le PID du fils dans le père."}, {"q": "Quelle fonction remplace l'image d'un processus par un nouveau programme ?", "options": ["A) fork()", "B) run()", "C) exec()", "D) spawn()"], "answer": "C", "explication": "execve() et ses variantes remplacent le code du processus courant."}, {"q": "Quelle fonction attend la fin d'un processus fils ?", "options": ["A) sleep()", "B) pause()", "C) wait()", "D) join()"], "answer": "C", "explication": "wait() ou waitpid() attend qu'un processus fils se termine."}, {"q": "Quelle fonction retourne le PID du processus courant ?", "options": ["A) getpid()", "B) mypid()", "C) pid()", "D) processpid()"], "answer": "A", "explication": "getpid() retourne le PID (Process ID) du processus appelant."}, {"q": "Quelle en-tête contient les appels système POSIX (fork, getpid...) ?", "options": ["A) <sys/types.h>", "B) <stdlib.h>", "C) <unistd.h>", "D) <posix.h>"], "answer": "C", "explication": "unistd.h contient fork(), getpid(), read(), write(), etc."}, {"q": "Qu'est-ce qu'un appel système (syscall) ?", "options": ["A) Un appel à une fonction de bibliothèque", "B) Une demande au noyau d'effectuer une opération privilégiée", "C) Un appel récursif", "D) Un appel entre deux processus"], "answer": "B", "explication": "Un syscall est une interface entre le programme et le noyau OS."}, {"q": "Quelle fonction installe un gestionnaire de signal en C ?", "options": ["A) catch()", "B) signal()", "C) handle()", "D) trap()"], "answer": "B", "explication": "signal(SIGNUM, handler) ou sigaction() installe un gestionnaire."}, {"q": "Quel signal est envoyé par Ctrl+C dans le terminal ?", "options": ["A) SIGKILL", "B) SIGTERM", "C) SIGINT", "D) SIGHUP"], "answer": "C", "explication": "Ctrl+C envoie SIGINT (signal d'interruption)."}, {"q": "Quel signal ne peut pas être intercepté ni ignoré ?", "options": ["A) SIGTERM", "B) SIGINT", "C) SIGKILL", "D) SIGUSR1"], "answer": "C", "explication": "SIGKILL (kill -9) ne peut pas être intercepté, bloqué ou ignoré."}, {"q": "Quelle fonction crée un pipe anonyme en C ?", "options": ["A) pipe()", "B) mkpipe()", "C) openpipe()", "D) fifo()"], "answer": "A", "explication": "pipe(fd) crée un tube non nommé avec fd[0]=lecture, fd[1]=écriture."}, {"q": "Quel est le but principal d'un pipe ?", "options": ["A) Partager de la mémoire entre processus", "B) Permettre la communication entre processus", "C) Créer des threads", "D) Lire des fichiers"], "answer": "B", "explication": "Un pipe est un mécanisme d'IPC (Inter-Process Communication)."}, {"q": "Un pipe est unidirectionnel ou bidirectionnel ?", "options": ["A) Bidirectionnel", "B) Unidirectionnel", "C) Dépend du système", "D) Aucun des deux"], "answer": "B", "explication": "Un pipe anonyme est unidirectionnel (données dans un sens seulement)."}, {"q": "Quelle bibliothèque C fournit les threads POSIX ?", "options": ["A) <thread.h>", "B) <pthread.h>", "C) <concurrent.h>", "D) <threads.h>"], "answer": "B", "explication": "pthread.h (POSIX threads) est la bibliothèque standard de threads."}, {"q": "Quelle fonction crée un thread POSIX ?", "options": ["A) thread_create()", "B) pthread_new()", "C) pthread_create()", "D) create_thread()"], "answer": "C", "explication": "pthread_create() crée un nouveau thread."}, {"q": "Quelle fonction attend la fin d'un thread POSIX ?", "options": ["A) pthread_wait()", "B) pthread_join()", "C) thread_join()", "D) pthread_end()"], "answer": "B", "explication": "pthread_join() attend qu'un thread se termine."}, {"q": "Qu'est-ce qu'un mutex ?", "options": ["A) Un type de thread", "B) Un mécanisme de synchronisation pour protéger les sections critiques", "C) Un signal entre processus", "D) Un type de pipe"], "answer": "B", "explication": "Un mutex (mutual exclusion) empêche deux threads d'accéder simultanément à une ressource partagée."}, {"q": "Qu'est-ce qu'une condition de course (race condition) ?", "options": ["A) Un bug de performance", "B) Un accès concurrent non synchronisé à des données partagées", "C) Un deadlock", "D) Un débordement de pile"], "answer": "B", "explication": "Une race condition survient quand plusieurs threads accèdent sans synchronisation à des données partagées."}, {"q": "Quelle est la valeur ASCII du caractère 'A' ?", "options": ["A) 97", "B) 65", "C) 48", "D) 90"], "answer": "B", "explication": "Le code ASCII de 'A' est 65 ; 'a' est 97."}, {"q": "Quel opérateur effectue un ET bit à bit ?", "options": ["A) &&", "B) &", "C) |", "D) ^"], "answer": "B", "explication": "& est l'opérateur ET bit à bit ; && est le ET logique."}, {"q": "Quel opérateur effectue un OU bit à bit ?", "options": ["A) ||", "B) ^", "C) |", "D) ~"], "answer": "C", "explication": "| est le OU bit à bit ; || est le OU logique."}, {"q": "Quel opérateur effectue un XOR bit à bit ?", "options": ["A) ~", "B) &", "C) |", "D) ^"], "answer": "D", "explication": "^ est l'opérateur XOR (OU exclusif) bit à bit."}, {"q": "Quel opérateur décale les bits vers la gauche ?", "options": ["A) >>", "B) <<", "C) <<=", "D) rotate"], "answer": "B", "explication": "<< décale les bits vers la gauche (équivaut à une multiplication par 2^n)."}, {"q": "Que fait l'opérateur ~ en C ?", "options": ["A) Négation logique", "B) Complément à un (inversion de tous les bits)", "C) Décalage droite", "D) OU exclusif"], "answer": "B", "explication": "~ inverse tous les bits (complément à un)."}, {"q": "Quelle est la portée d'une variable déclarée dans un bloc {} ?", "options": ["A) Globale", "B) Limitée au bloc et ses sous-blocs", "C) Limitée à la fonction entière", "D) Limitée au fichier"], "answer": "B", "explication": "Une variable de bloc existe seulement dans le bloc {} où elle est déclarée."}, {"q": "Que signifie 'undefined behavior' (comportement indéfini) en C ?", "options": ["A) Le programme génère une erreur de compilation", "B) Le standard C ne garantit rien sur le résultat", "C) Le programme s'arrête toujours", "D) Le programme génère un warning"], "answer": "B", "explication": "UB = le standard C ne spécifie pas le comportement ; tout peut arriver."}, {"q": "Quel mot-clé empêche l'optimisation d'une variable par le compilateur ?", "options": ["A) static", "B) extern", "C) volatile", "D) register"], "answer": "C", "explication": "volatile indique que la variable peut changer à tout moment (ex: registres matériels)."}, {"q": "Que fait le mot-clé extern ?", "options": ["A) Alloue de la mémoire externe", "B) Déclare une variable définie dans un autre fichier", "C) Exporte une fonction", "D) Rend une variable statique"], "answer": "B", "explication": "extern déclare qu'une variable ou fonction est définie dans un autre fichier source."}, {"q": "Quelle norme C a introduit les commentaires // ?", "options": ["A) C89/ANSI C", "B) C99", "C) C11", "D) C17"], "answer": "B", "explication": "La norme C99 a introduit les commentaires // (style C++)."}, {"q": "Qu'est-ce qu'un pointeur de fonction ?", "options": ["A) Un pointeur vers la valeur de retour d'une fonction", "B) Une variable qui stocke l'adresse d'une fonction", "C) Une fonction qui retourne un pointeur", "D) Un pointeur vers les paramètres d'une fonction"], "answer": "B", "explication": "Un pointeur de fonction contient l'adresse d'une fonction et permet de l'appeler indirectement."}, {"q": "Quelle fonction de la bibliothèque C fait appel à un tri rapide ?", "options": ["A) bsearch()", "B) lsearch()", "C) qsort()", "D) sort()"], "answer": "C", "explication": "qsort() (quick sort) trie un tableau ; elle prend un comparateur en paramètre."}, {"q": "Quelle fonction effectue une recherche dichotomique dans un tableau trié ?", "options": ["A) lsearch()", "B) qsort()", "C) bsearch()", "D) find()"], "answer": "C", "explication": "bsearch() effectue une recherche binaire dans un tableau trié."}, {"q": "Que fait la fonction exit(0) ?", "options": ["A) Met le processus en pause", "B) Termine le programme avec le code 0 (succès)", "C) Supprime le processus sans nettoyage", "D) Redémarre le programme"], "answer": "B", "explication": "exit(0) termine le programme proprement (appelle les fonctions atexit, flush des buffers)."}, {"q": "Quelle est la différence entre exit() et _exit() ?", "options": ["A) _exit() nettoie les buffers stdio, exit() non", "B) exit() nettoie les buffers stdio, _exit() appelle directement le noyau", "C) Aucune différence", "D) _exit() est réservé aux erreurs"], "answer": "B", "explication": "_exit() termine sans flush des buffers ni exécution des handlers atexit."}, {"q": "Qu'est-ce que stderr en C ?", "options": ["A) Le flux d'entrée standard", "B) Le flux de sortie standard", "C) Le flux d'erreur standard", "D) Un fichier de log"], "answer": "C", "explication": "stderr est le flux de sortie standard pour les messages d'erreur."}, {"q": "Quelle fonction affiche un message d'erreur correspondant à errno ?", "options": ["A) sterror()", "B) errmsg()", "C) perror()", "D) printerr()"], "answer": "C", "explication": "perror(msg) affiche msg suivi du message d'erreur correspondant à errno."}, {"q": "Qu'est-ce qu'errno ?", "options": ["A) Un type d'erreur en C", "B) Une variable globale indiquant le dernier code d'erreur système", "C) Une macro de sortie d'erreur", "D) Un signal d'erreur"], "answer": "B", "explication": "errno est une variable globale (dans errno.h) setée par les appels système en cas d'erreur."}, {"q": "Quelle est la taille de l'adresse mémoire sur un système 64 bits ?", "options": ["A) 4 octets", "B) 6 octets", "C) 8 octets", "D) 16 octets"], "answer": "C", "explication": "Sur un système 64 bits, un pointeur occupe 8 octets."}, {"q": "Que produit la compilation avec l'option -O2 ?", "options": ["A) Activation des avertissements niveau 2", "B) Optimisations du compilateur pour améliorer les performances", "C) Compilation en mode débogage", "D) Génération de code 64 bits"], "answer": "B", "explication": "-O2 active les optimisations de niveau 2 (sans compromettre la taille)."}, {"q": "Quelle est la différence entre un lien statique et dynamique ?", "options": ["A) Le lien statique inclut le code des bibliothèques dans l'exécutable", "B) Le lien dynamique inclut le code dans l'exécutable", "C) Il n'y a aucune différence", "D) Le lien statique est plus lent à l'exécution"], "answer": "A", "explication": "Statique = bibliothèque copiée dans l'exécutable. Dynamique = bibliothèque chargée à l'exécution."}, {"q": "Quel outil GDB permet-il d'utiliser ?", "options": ["A) Compiler du code C", "B) Déboguer un programme C", "C) Profiler les performances", "D) Analyser la mémoire"], "answer": "B", "explication": "GDB (GNU Debugger) permet de déboguer les programmes en pas à pas, breakpoints, etc."}, {"q": "Qu'est-ce qu'un fichier Makefile ?", "options": ["A) Un fichier source C spécial", "B) Un fichier de configuration du compilateur", "C) Un fichier décrivant les règles de compilation d'un projet", "D) Un fichier d'en-tête automatiquement généré"], "answer": "C", "explication": "Un Makefile décrit les dépendances et commandes pour construire un projet avec make."}, {"q": "Que fait l'outil Valgrind ?", "options": ["A) Compile du code C", "B) Détecte les fuites mémoire et erreurs mémoire", "C) Optimise les performances", "D) Gère les versions de code"], "answer": "B", "explication": "Valgrind (avec memcheck) détecte les fuites mémoire et accès invalides."}, {"q": "Quelle fonction ouvre une socket réseau en C ?", "options": ["A) connect()", "B) bind()", "C) socket()", "D) open()"], "answer": "C", "explication": "socket() crée une socket et retourne un descripteur de fichier."}, {"q": "Quel type de données représente un descripteur de fichier sous Unix ?", "options": ["A) FILE*", "B) Un entier int", "C) Un pointeur void*", "D) Un char*"], "answer": "B", "explication": "Sous Unix, les descripteurs de fichiers sont des entiers (0=stdin, 1=stdout, 2=stderr)."}, {"q": "Quelle fonction lit des octets depuis un descripteur de fichier Unix ?", "options": ["A) fread()", "B) gets()", "C) read()", "D) fscanf()"], "answer": "C", "explication": "read(fd, buf, count) est l'appel système de lecture bas niveau."}, {"q": "Quelle fonction écrit des octets vers un descripteur de fichier Unix ?", "options": ["A) fwrite()", "B) puts()", "C) write()", "D) fprintf()"], "answer": "C", "explication": "write(fd, buf, count) est l'appel système d'écriture bas niveau."}, {"q": "Qu'est-ce qu'un verrou (lock) dans un système de fichiers ?", "options": ["A) Une permission de lecture", "B) Un mécanisme pour contrôler l'accès concurrent à un fichier", "C) Un mot de passe sur un fichier", "D) Un type de lien symbolique"], "answer": "B", "explication": "flock() et fcntl() permettent de verrouiller des fichiers pour l'accès concurrent."}, {"q": "Qu'est-ce qu'un lien symbolique sous Unix ?", "options": ["A) Une copie d'un fichier", "B) Un raccourci qui pointe vers un autre fichier", "C) Un fichier compressé", "D) Un fichier exécutable"], "answer": "B", "explication": "Un lien symbolique (symlink) est un fichier qui pointe vers un autre fichier ou répertoire."}, {"q": "Quelle macro C vérifie une assertion à l'exécution ?", "options": ["A) CHECK()", "B) VERIFY()", "C) assert()", "D) TEST()"], "answer": "C", "explication": "assert(condition) dans <assert.h> arrête le programme si la condition est fausse."}, {"q": "Que fait memset(ptr, 0, size) ?", "options": ["A) Alloue size octets", "B) Copie size octets", "C) Met size octets à 0 à partir de ptr", "D) Compare deux zones mémoire"], "answer": "C", "explication": "memset() remplit un bloc mémoire avec une valeur (ici 0)."}, {"q": "Que fait memcpy(dst, src, n) ?", "options": ["A) Compare deux zones mémoire", "B) Copie n octets de src vers dst", "C) Alloue n octets", "D) Met n octets à zéro"], "answer": "B", "explication": "memcpy() copie n octets de la source vers la destination (zones non chevauchantes)."}, {"q": "Quel est le problème de strcpy() par rapport à strncpy() ?", "options": ["A) strcpy() est plus lente", "B) strcpy() ne copie pas le \\0", "C) strcpy() ne vérifie pas la taille du buffer de destination", "D) strcpy() ne fonctionne pas sous Linux"], "answer": "C", "explication": "strcpy() peut provoquer un buffer overflow ; strncpy() limite le nombre de caractères copiés."}, {"q": "Quelle fonction convertit une chaîne en entier en C ?", "options": ["A) strtoint()", "B) intval()", "C) atoi()", "D) int()"], "answer": "C", "explication": "atoi() (ASCII to integer) convertit une chaîne numérique en int."}, {"q": "Quelle fonction convertit un entier en chaîne en C ?", "options": ["A) itoa()", "B) sprintf()", "C) tostring()", "D) strint()"], "answer": "B", "explication": "sprintf(buf, \"%d\", n) est la méthode portable pour convertir un entier en chaîne."}, {"q": "Qu'est-ce que la mémoire partagée (shared memory) en IPC ?", "options": ["A) Un pipe entre deux processus", "B) Une zone mémoire accessible par plusieurs processus simultanément", "C) Un fichier partagé sur le réseau", "D) La mémoire du noyau"], "answer": "B", "explication": "La mémoire partagée (shmget/shmat) est la méthode IPC la plus rapide."}, {"q": "Quelle structure de données est typiquement utilisée pour implémenter une pile ?", "options": ["A) File (queue)", "B) Tableau circulaire", "C) Liste chaînée ou tableau", "D) Arbre binaire"], "answer": "C", "explication": "Une pile (stack) suit LIFO et peut être implémentée avec tableau ou liste chaînée."}, {"q": "Qu'est-ce qu'une liste chaînée ?", "options": ["A) Un tableau dynamique", "B) Une suite de nœuds où chaque nœud pointe vers le suivant", "C) Un tableau de pointeurs", "D) Une structure de données circulaire uniquement"], "answer": "B", "explication": "Chaque nœud contient une donnée et un pointeur vers le nœud suivant."}, {"q": "Quel algorithme de tri a une complexité O(n log n) en moyenne ?", "options": ["A) Tri à bulles", "B) Tri par insertion", "C) Tri rapide (quicksort)", "D) Tri par sélection"], "answer": "C", "explication": "Le tri rapide a O(n log n) en moyenne, O(n²) dans le pire cas."}, {"q": "Qu'est-ce qu'un segment fault détectable par Valgrind mais pas à la compilation ?", "options": ["A) Variable non déclarée", "B) Accès à un pointeur après free() (use-after-free)", "C) Boucle infinie", "D) Division par zéro"], "answer": "B", "explication": "use-after-free est un bug d'exécution indétectable par le compilateur mais repéré par Valgrind."}, {"q": "Quel format de printf affiche un pointeur en hexadécimal ?", "options": ["A) %x", "B) %d", "C) %p", "D) %h"], "answer": "C", "explication": "%p affiche la valeur d'un pointeur en notation hexadécimale."}, {"q": "Que fait l'instruction return dans main() ?", "options": ["A) Retourne une valeur à la fonction appelante", "B) Arrête uniquement le thread courant", "C) Termine le programme et retourne le code au système", "D) Libère toute la mémoire allouée"], "answer": "C", "explication": "return dans main() termine le programme avec le code de retour fourni au système d'exploitation."}, {"q": "Quelle est la différence entre i++ et ++i ?", "options": ["A) Aucune différence", "B) i++ incrémente puis retourne l'ancienne valeur ; ++i incrémente et retourne la nouvelle", "C) ++i est interdit en C", "D) i++ est plus rapide"], "answer": "B", "explication": "i++ (post-incrément) : utilise puis incrémente. ++i (pré-incrément) : incrémente puis utilise."}, {"q": "Que vaut (int)(3.9) en C ?", "options": ["A) 4", "B) 3", "C) 4.0", "D) Erreur"], "answer": "B", "explication": "Le cast (int) tronque vers zéro : (int)3.9 = 3."}, {"q": "Quelle en-tête fournit les fonctions mathématiques (sqrt, cos...) ?", "options": ["A) <calc.h>", "B) <numeric.h>", "C) <math.h>", "D) <maths.h>"], "answer": "C", "explication": "math.h contient sqrt(), pow(), sin(), cos(), etc. (compiler avec -lm)."}, {"q": "Comment éviter les inclusions multiples d'un fichier .h ?", "options": ["A) #once", "B) #pragma once ou #ifndef HEADER_H / #define HEADER_H / #endif", "C) #norepeat", "D) #include_once"], "answer": "B", "explication": "Les include guards (#ifndef) ou #pragma once évitent les inclusions multiples."}, {"q": "Qu'est-ce qu'un enum en C ?", "options": ["A) Un tableau énuméré", "B) Un type permettant de nommer des constantes entières", "C) Un pointeur de liste", "D) Une boucle d'énumération"], "answer": "B", "explication": "enum { LUNDI, MARDI, ... } définit des constantes entières nommées."}, {"q": "Quelle valeur commence par défaut le premier membre d'un enum ?", "options": ["A) 1", "B) -1", "C) 0", "D) Indéfini"], "answer": "C", "explication": "Sans valeur explicite, le premier membre d'un enum vaut 0."}, {"q": "Qu'est-ce qu'une variable automatique (auto) en C ?", "options": ["A) Une variable allouée sur le tas", "B) Une variable locale allouée sur la pile (comportement par défaut)", "C) Une variable globale automatiquement initialisée", "D) Un pointeur auto-déférencement"], "answer": "B", "explication": "auto est la classe de stockage par défaut pour les variables locales (sur la pile)."}, {"q": "Quel est le rôle du fichier objet (.o) dans la compilation C ?", "options": ["A) C'est l'exécutable final", "B) C'est le code source préprocessé", "C) C'est le code machine d'un fichier source, avant l'édition de liens", "D) C'est un fichier de configuration"], "answer": "C", "explication": "Un .o contient le code machine d'un fichier .c avant d'être lié aux autres .o et bibliothèques."}]
+;
+
+// ── State ──────────────────────────────────────────────
+let session = [];
+let current = 0;
+let score = 0;
+let errors = [];
+let timerInterval = null;
+let startTime = null;
+let answered = false;
+
+// ── Helpers ────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// ── Start ──────────────────────────────────────────────
+function startQuiz() {
+  session = shuffle(ALL_QUESTIONS).slice(0, 150);
+  current = 0;
+  score = 0;
+  errors = [];
+  startTime = Date.now();
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 1000);
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  document.getElementById('timer').textContent = fmtTime(elapsed);
+}
+
+// ── Render ─────────────────────────────────────────────
+function renderQuestion() {
+  answered = false;
+  const q = session[current];
+  const total = session.length;
+
+  document.getElementById('q-idx').textContent = current + 1;
+  document.getElementById('q-total').textContent = total;
+  document.getElementById('q-num-label').textContent = `Q${String(current + 1).padStart(3,'0')}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('live-score').textContent = score;
+
+  const pct = (current / total) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback-box';
+  fb.textContent = '';
+
+  document.getElementById('btn-next').style.display = 'none';
+
+  const cont = document.getElementById('options-container');
+  cont.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span><span>${escHtml(opt)}</span>`;
+    btn.onclick = () => selectAnswer(letters[i], btn);
+    cont.appendChild(btn);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Answer ─────────────────────────────────────────────
+function selectAnswer(letter, clickedBtn) {
+  if (answered) return;
+  answered = true;
+
+  const q = session[current];
+  const correct = q.answer;
+  const letters = ['A','B','C','D'];
+  const allBtns = document.querySelectorAll('.opt-btn');
+
+  allBtns.forEach((b, i) => {
+    b.disabled = true;
+    if (letters[i] === correct) b.classList.add('correct');
+    else if (letters[i] === letter && letter !== correct) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback-box');
+  if (letter === correct) {
+    score++;
+    fb.innerHTML = `<span class="fb-icon">✅</span><strong>Bonne réponse !</strong> ${escHtml(q.explication)}`;
+    fb.className = 'feedback-box show';
+  } else {
+    errors.push({ num: current + 1, q: q.q, given: letter, correct });
+    fb.innerHTML = `<span class="fb-icon">❌</span><strong>Mauvaise réponse.</strong> La bonne était <strong>${correct}</strong>. ${escHtml(q.explication)}`;
+    fb.className = 'feedback-box wrong-fb show';
+  }
+
+  document.getElementById('live-score').textContent = score;
+  document.getElementById('btn-next').style.display = 'flex';
+}
+
+// ── Navigation ─────────────────────────────────────────
+function nextQuestion() {
+  current++;
+  if (current >= session.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function confirmQuit() {
+  if (confirm('Quitter le QCM en cours ?')) {
+    clearInterval(timerInterval);
+    showScreen('screen-welcome');
+  }
+}
+
+// ── Results ────────────────────────────────────────────
+function showResults() {
+  clearInterval(timerInterval);
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const total = session.length;
+  const pct = Math.round((score / total) * 100);
+
+  // animate ring
+  const circumference = 427;
+  const offset = circumference - (pct / 100) * circumference;
+  setTimeout(() => {
+    document.getElementById('ring-arc').style.transition = 'stroke-dashoffset 1s ease';
+    document.getElementById('ring-arc').style.strokeDashoffset = offset;
+  }, 100);
+
+  document.getElementById('res-pct').textContent = pct + '%';
+  document.getElementById('res-correct').textContent = score;
+  document.getElementById('res-wrong').textContent = total - score;
+  document.getElementById('res-time').textContent = fmtTime(elapsed);
+
+  let mention, color;
+  if (pct >= 90) { mention = '🏆 Excellent !'; color='#00e5ff'; }
+  else if (pct >= 75) { mention = '🥇 Très bien !'; color='#22d3a0'; }
+  else if (pct >= 60) { mention = '👍 Bien'; color='#22d3a0'; }
+  else if (pct >= 40) { mention = '😐 Passable'; color='#f59e0b'; }
+  else { mention = '📚 À retravailler'; color='#ff4d6d'; }
+
+  const mEl = document.getElementById('res-mention');
+  mEl.textContent = mention;
+  mEl.style.color = color;
+
+  const m = Math.floor(elapsed/60), s = elapsed%60;
+  document.getElementById('res-sub').textContent =
+    `${score} / ${total} correctes · ${m}m ${s}s · ${errors.length} erreur(s)`;
+
+  // Errors list
+  const sec = document.getElementById('errors-section');
+  if (errors.length === 0) {
+    sec.innerHTML = '<p style="color:var(--green);text-align:center;font-size:.9rem">🎉 Aucune erreur !</p>';
+  } else {
+    let html = `<p class="errors-title">Questions ratées (${errors.length})</p>`;
+    errors.forEach(e => {
+      html += `<div class="err-item">
+        <div class="eq">${escHtml(e.q.length > 90 ? e.q.slice(0,90)+'…' : e.q)}</div>
+        <div class="ea">Votre réponse : ${e.given} &nbsp;&nbsp; <span class="ec">Bonne : ${e.correct}</span></div>
+      </div>`;
+    });
+    sec.innerHTML = html;
+  }
+
+  showScreen('screen-results');
+}
+</script>
+</body>
+</html>

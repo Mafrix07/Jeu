@@ -9,25 +9,33 @@ interface QuestionCardProps {
 }
 
 export const QuestionCard = ({ question, currentPlayer, onVote }: QuestionCardProps) => {
+  const letters = ['A', 'B', 'C', 'D'];
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={question.id}
-        initial={{ x: 100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -100, opacity: 0 }}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -20, opacity: 0 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-[480px] flex flex-col gap-8"
+        className="w-full max-w-[600px] flex flex-col gap-6"
       >
-        <h2 className="text-3xl font-bold text-[#ffd700] text-center min-h-[80px] flex items-center justify-center px-4">
-          {question.text}
-        </h2>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 shadow-2xl">
+          <div className="font-mono text-[10px] text-[var(--accent)] tracking-[4px] uppercase mb-4 opacity-70">
+            // Question ID: {String(question.id).padStart(3, '0')}
+          </div>
+          <h2 className="text-xl md:text-2xl font-bold text-white leading-relaxed">
+            {question.text}
+          </h2>
+        </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          {PLAYERS.map((name) => (
+        <div className="grid grid-cols-1 gap-3">
+          {PLAYERS.map((name, i) => (
             <VoteButton
               key={name}
               name={name}
+              letter={letters[i]}
               onClick={() => onVote(name)}
               disabled={name === currentPlayer}
             />

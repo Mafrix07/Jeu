@@ -1,18 +1,22 @@
-interface ProgressDotsProps {
-  current: number;
-  total: number;
-}
+import { motion } from 'framer-motion';
 
-export const ProgressDots = ({ current, total }: ProgressDotsProps) => {
+export const ProgressDots = ({ current, total }: { current: number; total: number }) => {
+  const percentage = (current / total) * 100;
+
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="text-[#5c6bc0] font-mono text-sm">
-        {current} / {total}
+    <div className="w-full max-w-[600px] mb-8">
+      <div className="flex justify-between items-center mb-3 font-mono text-[11px] uppercase tracking-widest text-[var(--muted)]">
+        <div>Progress</div>
+        <div>
+          <span className="text-[var(--accent)] font-bold">{current}</span> / {total}
+        </div>
       </div>
-      <div className="w-full h-2 bg-[#1a1a2e] rounded-full overflow-hidden max-w-[200px]">
-        <div
-          className="h-full bg-[#ffd700] transition-all duration-300"
-          style={{ width: `${(current / total) * 100}%` }}
+      <div className="h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="h-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)]"
         />
       </div>
     </div>

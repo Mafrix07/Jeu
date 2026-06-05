@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSession } from '../hooks/useSession';
 import { supabase } from '../lib/supabase';
-import { getPortrait } from '../lib/portraits';
-import type { Category } from '../lib/portraits';
+import { getPortrait, Category } from '../lib/portraits';
 import { PortraitCard } from '../components/PortraitCard';
 import { CATEGORIES } from '../lib/constants';
 
@@ -21,7 +20,6 @@ export const ResultsMe = () => {
     }
 
     const fetchResults = async () => {
-      // Get all votes received by this player in this session
       const { data, error } = await supabase
         .from('votes')
         .select('category')
@@ -47,14 +45,21 @@ export const ResultsMe = () => {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] flex flex-col items-center p-6 pt-12">
-      <div className="w-full max-w-[480px] flex flex-col gap-8">
+    <div className="min-h-screen flex flex-col items-center p-6 pt-12">
+      <div className="w-full max-w-[600px] flex flex-col gap-10">
         <header className="text-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.7 }}
+            className="font-mono text-[10px] text-[var(--accent)] tracking-[6px] uppercase mb-4"
+          >
+            // PERSONAL_DOSSIER
+          </motion.div>
           <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-2">
-            Ton Portrait
+            PROFIL GÉNÉRÉ
           </h1>
-          <p className="text-[#5c6bc0] font-bold">
-            Basé sur les votes anonymes du groupe
+          <p className="text-[var(--muted)] font-mono text-xs uppercase tracking-widest">
+            {playerName} — ID: {(Math.random() * 100000).toFixed(0)}
           </p>
         </header>
 
@@ -66,13 +71,20 @@ export const ResultsMe = () => {
         )}
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(0,229,255,0.2)' }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => navigate('/results/all')}
-          className="mt-8 bg-[#ffd700] text-[#0a0a1a] py-4 rounded-2xl font-black uppercase tracking-widest text-xl shadow-[0_0_20px_rgba(255,215,0,0.3)]"
+          className="mt-6 bg-transparent border-2 border-[var(--accent)] text-[var(--accent)] py-5 rounded-2xl font-black uppercase tracking-[3px] text-lg shadow-xl"
         >
-          Voir tous les scores
+          Accéder aux Datas du Groupe
         </motion.button>
+
+        <button
+          onClick={() => { localStorage.clear(); window.location.href = '/'; }}
+          className="text-[var(--muted)] font-mono text-[10px] uppercase tracking-widest hover:text-[var(--red)] transition-colors"
+        >
+          // TERMINER_LA_SESSION
+        </button>
       </div>
     </div>
   );

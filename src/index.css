@@ -1,34 +1,59 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --bg: #0d0f14;
+  --surface: #13161d;
+  --card: #1a1e28;
+  --border: #252a38;
+  --accent: #00e5ff;
+  --accent2: #7c3aed;
+  --gold: #ffd700;
+  --green: #22d3a0;
+  --red: #ff4d6d;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
 
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0a0a1a;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color: var(--text);
+  background-color: var(--bg);
+  font-family: var(--sans);
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
 }
 
-h1, h2, h3, h4, .font-syne {
-  font-family: 'Syne', sans-serif;
+/* GRID BACKGROUND */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, .03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, .03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: -1;
 }
 
 #root {
   width: 100%;
+}
+
+h1, h2, h3, h4, .font-syne {
+  font-family: var(--sans);
+}
+
+.font-mono {
+  font-family: var(--mono);
 }
 
 @layer base {
