@@ -76,7 +76,7 @@ export const ResultsMe = () => {
             className="flex flex-col gap-3"
           >
             <div className="font-mono text-[10px] text-[var(--muted)] uppercase tracking-[4px]">
-              // CE QUE LE GROUPE A DIT DE TOI
+              // POURQUOI LE GROUPE A VOTÉ POUR TOI
             </div>
             {comments.map((c, i) => (
               <motion.div

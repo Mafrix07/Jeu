@@ -124,14 +124,14 @@ export const Vote = () => {
               {/* Comment input */}
               <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-4">
                 <label className="font-mono text-[10px] text-[var(--muted)] uppercase tracking-[3px]">
-                  // COMMENTAIRE OPTIONNEL
+                  // POURQUOI LUI ? (optionnel)
                 </label>
                 <textarea
                   autoFocus
                   maxLength={80}
                   value={comment}
                   onChange={e => setComment(e.target.value)}
-                  placeholder="Ajoute une vanne... (max 80 car.)"
+                  placeholder="Explique ton choix... (optionnel)"
                   className="bg-transparent text-white placeholder-[var(--muted)] text-sm resize-none outline-none font-sans w-full h-16"
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
                 />
