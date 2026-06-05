@@ -32,7 +32,7 @@ export const Vote = () => {
       if (data) {
         if (data.questions_answered >= questions.length) {
           navigate('/waiting');
-          return; // Stop execution here
+          return;
         }
         setCurrentIndex(data.questions_answered);
       }
@@ -53,9 +53,7 @@ export const Vote = () => {
   }, [sessionId, playerName, navigate]);
 
   const handleVote = async (votedFor: string) => {
-    // Safety check for index
     if (currentIndex >= shuffledQuestions.length) return;
-
     const isDone = await submitVote(shuffledQuestions[currentIndex].id, votedFor);
     if (isDone) {
       navigate('/waiting');
@@ -64,28 +62,27 @@ export const Vote = () => {
     }
   };
 
-  // Prevent crash if index out of bounds before redirection
   if (loading || currentIndex >= shuffledQuestions.length) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center">
-        <div className="text-[#5c6bc0] animate-pulse font-bold">Chargement...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[var(--accent)] font-mono text-sm animate-pulse uppercase tracking-widest">
+          CHARGEMENT...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] flex flex-col items-center p-6 pt-12">
-      <div className="w-full max-w-[480px] flex flex-col gap-12 items-center">
+    <div className="min-h-screen flex flex-col items-center p-6 pt-10">
+      <div className="w-full max-w-[520px] flex flex-col gap-10 items-center">
         <ProgressDots current={currentIndex} total={questions.length} />
-
         <QuestionCard
           question={shuffledQuestions[currentIndex]}
           currentPlayer={playerName!}
           onVote={handleVote}
         />
-
-        <div className="mt-auto pt-8 text-[#5c6bc0]/40 font-mono text-xs text-center uppercase tracking-widest">
-          Ton vote est anonyme
+        <div className="font-mono text-[10px] text-[var(--muted)] uppercase tracking-[3px] opacity-60">
+          // vote_anonymous — SHA-256 secured
         </div>
       </div>
     </div>
