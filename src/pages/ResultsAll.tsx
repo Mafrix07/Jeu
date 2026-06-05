@@ -5,7 +5,7 @@ import { useSession } from '../hooks/useSession';
 import { supabase } from '../lib/supabase';
 import { CategoryBar } from '../components/CategoryBar';
 import { CATEGORIES, PLAYERS } from '../lib/constants';
-import { Category } from '../lib/portraits';
+import type { Category } from '../lib/portraits';
 
 interface GroupResult {
   category: Category;

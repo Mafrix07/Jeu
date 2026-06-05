@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSession } from '../hooks/useSession';
 import { supabase } from '../lib/supabase';
-import { getPortrait, Category } from '../lib/portraits';
+import { getPortrait } from '../lib/portraits';
+import type { Category } from '../lib/portraits';
 import { PortraitCard } from '../components/PortraitCard';
 import { CATEGORIES } from '../lib/constants';
 
