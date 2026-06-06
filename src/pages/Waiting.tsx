@@ -78,7 +78,7 @@ export const Waiting = () => {
           onClick={handleShowResults}
           className="bg-gradient-to-br from-[var(--accent)] to-[#0080a0] text-black px-10 py-5 rounded-2xl text-xl font-black uppercase tracking-widest shadow-2xl"
         >
-          >>> VOIR RÉSULTATS R{localRound}
+          {'>>>'} VOIR RÉSULTATS R{localRound}
         </motion.button>
       ) : (
         <div className="text-[var(--muted)] font-mono text-[10px] uppercase tracking-[2px] animate-pulse">

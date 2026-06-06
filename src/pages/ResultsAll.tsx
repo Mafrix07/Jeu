@@ -121,7 +121,7 @@ export const ResultsAll = () => {
               onClick={handleNextRound}
               className="bg-gradient-to-br from-[var(--accent2)] to-[#4c1d95] text-white px-12 py-5 rounded-2xl text-xl font-black uppercase tracking-widest shadow-2xl"
             >
-              >>> DÉMARRER ROUND {round + 1}
+              {'>>>'} DÉMARRER ROUND {round + 1}
             </motion.button>
           ) : round < 3 ? (
             <div className="text-[var(--muted)] font-mono text-[10px] uppercase tracking-[2px] text-center max-w-[300px]">
@@ -132,7 +132,7 @@ export const ResultsAll = () => {
               onClick={() => navigate('/')}
               className="text-[var(--accent)] font-mono text-sm font-black uppercase tracking-widest hover:text-white transition-colors"
             >
-              >>> RETOUR_ACCUEIL_FINAL
+              {'>>>'} RETOUR_ACCUEIL_FINAL
             </button>
           )}
         </div>
