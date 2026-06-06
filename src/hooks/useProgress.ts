@@ -5,6 +5,7 @@ export interface PlayerProgress {
   player_name: string;
   questions_answered: number;
   is_done: boolean;
+  round_completed: number;
 }
 
 export const useProgress = (sessionId: string | null) => {
@@ -17,7 +18,7 @@ export const useProgress = (sessionId: string | null) => {
     const fetchProgress = async () => {
       const { data, error } = await supabase
         .from('progress')
-        .select('player_name, questions_answered, is_done')
+        .select('player_name, questions_answered, is_done, round_completed')
         .eq('session_id', sessionId);
 
       if (error) {
@@ -51,8 +52,13 @@ export const useProgress = (sessionId: string | null) => {
     };
   }, [sessionId]);
 
-  const allDone = players.length === 4 && players.every(p => p.is_done);
-  const doneCount = players.filter(p => p.is_done).length;
+  const isRoundFinished = (round: number) => {
+    return players.length === 4 && players.every(p => p.round_completed >= round);
+  };
 
-  return { players, allDone, doneCount, loading };
+  const getFinishedCount = (round: number) => {
+    return players.filter(p => p.round_completed >= round).length;
+  };
+
+  return { players, isRoundFinished, getFinishedCount, loading };
 };

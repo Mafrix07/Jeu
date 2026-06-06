@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSession } from '../hooks/useSession';
+import { useProgress } from '../hooks/useProgress';
 import { supabase } from '../lib/supabase';
 import { CategoryBar } from '../components/CategoryBar';
-import { CATEGORIES, PLAYERS } from '../lib/constants';
-import type { Category } from '../lib/portraits';
+import { PLAYERS } from '../lib/constants';
+import { Category } from '../lib/portraits';
+
+const CATEGORIES: Category[] = ['Football', 'Amour', 'Film d\'horreur', 'Perso', 'Argent', 'Loyauté', 'Style', 'Maison', 'Vices', 'Talents', 'Basket'];
 
 interface GroupResult {
   category: Category;
@@ -14,8 +17,10 @@ interface GroupResult {
 
 export const ResultsAll = () => {
   const navigate = useNavigate();
-  const { sessionId } = useSession();
+  const { sessionId, getRound, nextRound } = useSession();
+  const { isRoundFinished, loading: progressLoading } = useProgress(sessionId);
   const [results, setResults] = useState<GroupResult[]>([]);
+  const [round, setRound] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +30,9 @@ export const ResultsAll = () => {
     }
 
     const fetchAllResults = async () => {
+      const r = await getRound(sessionId);
+      setRound(r);
+
       const { data, error } = await supabase
         .from('votes')
         .select('category, voted_for')
@@ -49,7 +57,14 @@ export const ResultsAll = () => {
     fetchAllResults();
   }, [sessionId, navigate]);
 
-  if (loading) return null;
+  const handleNextRound = async () => {
+    await nextRound();
+    navigate('/vote');
+  };
+
+  if (loading || progressLoading) return null;
+
+  const allFinished = isRoundFinished(round);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 pt-12 pb-20">
@@ -60,13 +75,13 @@ export const ResultsAll = () => {
             animate={{ opacity: 0.7 }}
             className="font-mono text-[10px] text-[var(--accent)] tracking-[6px] uppercase mb-4"
           >
-            // GLOBAL_ANALYTICS
+            // GLOBAL_ANALYTICS_SESSION
           </motion.div>
           <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-2">
-            RÉSULTATS DU GROUPE
+            RÉSULTATS {round < 3 ? `ROUND 0${round}` : 'FINAUX'}
           </h1>
           <p className="text-[var(--muted)] font-mono text-xs uppercase tracking-widest">
-            SESSION DATA STREAM — {new Date().toLocaleDateString()}
+            {round < 3 ? `PHASE DE SYNCHRONISATION ${round}/3` : 'MISSION TERMINÉE'}
           </p>
         </header>
 
@@ -76,12 +91,9 @@ export const ResultsAll = () => {
               key={res.category}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.05 }}
               className="bg-[var(--card)]/50 p-6 rounded-3xl border border-[var(--border)] relative overflow-hidden group"
             >
-              <div className="absolute top-0 right-0 p-3 opacity-10 font-mono text-[40px] font-black group-hover:opacity-20 transition-opacity select-none pointer-events-none">
-                {(i + 1).toString().padStart(2, '0')}
-              </div>
               <h2 className="text-[var(--accent)] text-lg font-black uppercase mb-8 tracking-[4px] flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full bg-[var(--accent2)]" />
                 {res.category}
@@ -102,12 +114,27 @@ export const ResultsAll = () => {
         </div>
 
         <div className="flex flex-col items-center gap-6 mt-10">
-          <button
-            onClick={() => navigate('/')}
-            className="text-[var(--accent)] font-mono text-sm font-black uppercase tracking-widest hover:text-white transition-colors"
-          >
-            {'>>>'} RETOUR_ACCUEIL
-          </button>
+          {round < 3 && allFinished ? (
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(124,58,237,0.4)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleNextRound}
+              className="bg-gradient-to-br from-[var(--accent2)] to-[#4c1d95] text-white px-12 py-5 rounded-2xl text-xl font-black uppercase tracking-widest shadow-2xl"
+            >
+              >>> DÉMARRER ROUND {round + 1}
+            </motion.button>
+          ) : round < 3 ? (
+            <div className="text-[var(--muted)] font-mono text-[10px] uppercase tracking-[2px] text-center max-w-[300px]">
+              Synchronisation du round {round} en cours... Les 4 joueurs doivent avoir consulté les résultats.
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/')}
+              className="text-[var(--accent)] font-mono text-sm font-black uppercase tracking-widest hover:text-white transition-colors"
+            >
+              >>> RETOUR_ACCUEIL_FINAL
+            </button>
+          )}
         </div>
       </div>
     </div>

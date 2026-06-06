@@ -2,7 +2,8 @@
 CREATE TABLE sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  is_active BOOLEAN DEFAULT TRUE
+  is_active BOOLEAN DEFAULT TRUE,
+  current_round INT DEFAULT 1 -- Global round for the session
 );
 
 -- Create votes table
@@ -13,6 +14,7 @@ CREATE TABLE votes (
   question_id INT NOT NULL,
   voted_for TEXT NOT NULL,
   category TEXT NOT NULL,
+  round INT DEFAULT 1, -- Round number of this vote
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -23,6 +25,7 @@ CREATE TABLE progress (
   player_name TEXT NOT NULL,
   questions_answered INT DEFAULT 0,
   is_done BOOLEAN DEFAULT FALSE,
+  round_completed INT DEFAULT 0, -- Track which rounds the player has finished
   UNIQUE(session_id, player_name)
 );
 
@@ -37,6 +40,9 @@ CREATE POLICY "Allow anyone to read active sessions" ON sessions
 
 CREATE POLICY "Allow anyone to insert sessions" ON sessions
   FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow anyone to update sessions" ON sessions
+  FOR UPDATE USING (true);
 
 -- RLS Policies for votes
 CREATE POLICY "Allow anyone to insert votes" ON votes
@@ -55,5 +61,5 @@ CREATE POLICY "Allow anyone to insert/update progress" ON progress
 CREATE POLICY "Allow anyone to update own progress" ON progress
   FOR UPDATE USING (true);
 
--- Add unique constraint to prevent double voting
-ALTER TABLE votes ADD CONSTRAINT unique_vote_per_voter UNIQUE (session_id, voter_hash, question_id);
+-- Add unique constraint to prevent double voting per round
+ALTER TABLE votes ADD CONSTRAINT unique_vote_per_voter_round UNIQUE (session_id, voter_hash, question_id, round);
