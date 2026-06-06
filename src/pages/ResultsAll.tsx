@@ -6,7 +6,7 @@ import { useProgress } from '../hooks/useProgress';
 import { supabase } from '../lib/supabase';
 import { CategoryBar } from '../components/CategoryBar';
 import { PLAYERS } from '../lib/constants';
-import { Category } from '../lib/portraits';
+import type { Category } from '../lib/portraits';
 
 const CATEGORIES: Category[] = ['Football', 'Amour', 'Film d\'horreur', 'Perso', 'Argent', 'Loyauté', 'Style', 'Maison', 'Vices', 'Talents', 'Basket'];
 
